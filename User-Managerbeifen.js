@@ -147,7 +147,10 @@ export default {
   
   // 定时任务：每15分钟自动更新优选 IP (需要在 wrangler.toml 中配置 cron trigger)
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(autoUpdateBestIPs(env));
+    ctx.waitUntil(Promise.all([
+      autoUpdateBestIPs(env),
+      autoCleanupInactiveUsers(env)
+    ]));
   }
 };
 
@@ -987,6 +990,70 @@ async function handleAdminMigrate(request, env) {
     return new Response(`迁移成功！已将 ${count} 条 KV 数据导入 D1 数据库。`, { status: 200 });
 }
 
+// 定时任务：自动清理非活跃用户
+async function autoCleanupInactiveUsers(env) {
+  try {
+    const settings = await dbGetSettings(env) || {};
+    
+    // 检查是否启用自动清理
+    if (!settings.enableAutoCleanup) {
+      return;
+    }
+    
+    const cleanupDays = settings.autoCleanupDays || 7;
+    const cutoffTime = Date.now() - (cleanupDays * 24 * 60 * 60 * 1000);
+    
+    console.log(`[定时任务] 开始清理过期超过 ${cleanupDays} 天且未登录的用户...`);
+    
+    // 查找需要删除的用户账号
+    // 条件：订阅已过期（expiry < 当前时间）且过期后超过指定天数未登录
+    // 排除：未激活用户（expiry 为 NULL）和订阅未过期的用户
+    const { results: inactiveAccounts } = await env.DB.prepare(`
+      SELECT ua.id, ua.uuid, ua.username, ua.last_login, ua.created_at, u.expiry
+      FROM user_accounts ua
+      INNER JOIN users u ON ua.uuid = u.uuid
+      WHERE u.expiry IS NOT NULL
+        AND u.expiry < ?
+        AND (
+          (ua.last_login IS NOT NULL AND ua.last_login < ?)
+          OR (ua.last_login IS NULL AND u.expiry < ?)
+        )
+    `).bind(Date.now(), cutoffTime, cutoffTime).all();
+    
+    if (inactiveAccounts.length === 0) {
+      console.log('[定时任务] 没有需要清理的非活跃用户');
+      return;
+    }
+    
+    console.log(`[定时任务] 找到 ${inactiveAccounts.length} 个非活跃用户账号`);
+    
+    // 批量删除用户
+    for (const account of inactiveAccounts) {
+      try {
+        // 删除用户会话
+        await env.DB.prepare("DELETE FROM user_sessions WHERE user_id = ?").bind(account.id).run();
+        
+        // 删除用户账号
+        await env.DB.prepare("DELETE FROM user_accounts WHERE id = ?").bind(account.id).run();
+        
+        // 删除 UUID 用户
+        if (account.uuid) {
+          await env.DB.prepare("DELETE FROM users WHERE uuid = ?").bind(account.uuid).run();
+        }
+        
+        console.log(`[定时任务] 已删除非活跃用户: ${account.username} (UUID: ${account.uuid})`);
+      } catch (e) {
+        console.error(`[定时任务] 删除用户 ${account.username} 失败:`, e.message);
+      }
+    }
+    
+    console.log(`[定时任务] 清理完成，共删除 ${inactiveAccounts.length} 个非活跃用户`);
+    
+  } catch (error) {
+    console.error('[定时任务] 清理非活跃用户失败:', error.message);
+  }
+}
+
 // 定时任务：自动更新优选 IP (替换旧IP而不是累加)
 async function autoUpdateBestIPs(env) {
   try {
@@ -1423,6 +1490,14 @@ async function handleAdminUpdateSystemSettings(request, env) {
   // 更新站点名称
   if (formData.has('siteName')) {
     currentSettings.siteName = formData.get('siteName') || 'CFly';
+  }
+  
+  // 更新自动清理非活跃用户设置
+  if (formData.has('enableAutoCleanup')) {
+    currentSettings.enableAutoCleanup = formData.get('enableAutoCleanup') === 'true';
+  }
+  if (formData.has('autoCleanupDays')) {
+    currentSettings.autoCleanupDays = parseInt(formData.get('autoCleanupDays')) || 7;
   }
   
   await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
@@ -1938,6 +2013,27 @@ async function handleAdminPanel(request, env, adminPath) {
                     <div>
                       <label style="font-size:13px;color:#666;display:block;margin-bottom:5px;">链接2 地址</label>
                       <input type="text" id="customLink2Url" value="${settings.customLink2Url || ''}" onchange="updateSystemSettings()" placeholder="例如：https://t.me/ikun_cloud" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;">
+                    </div>
+                  </div>
+                </div>
+                <div style="padding:15px;background:#fff1f0;border-radius:8px;margin-bottom:15px;">
+                  <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+                    <div>
+                      <span style="font-weight:600;display:block;margin-bottom:4px;">🧹 自动清理非活跃用户</span>
+                      <div style="font-size:13px;color:#666;">
+                        自动删除指定天数内未登录的非活跃用户账号
+                      </div>
+                    </div>
+                    <div class="switch" onclick="toggleSwitch(event, 'enableAutoCleanupCheck')">
+                      <input type="checkbox" id="enableAutoCleanupCheck" ${settings.enableAutoCleanup ? 'checked' : ''} onchange="updateSystemSettings()" style="display:none;">
+                      <span class="slider" style="background:${settings.enableAutoCleanup ? '#52c41a' : '#d9d9d9'};"></span>
+                    </div>
+                  </label>
+                  <div style="margin-top:12px;${settings.enableAutoCleanup ? '' : 'opacity:0.5;pointer-events:none;'}">
+                    <label style="font-size:13px;color:#666;display:block;margin-bottom:5px;">保留天数：</label>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <input type="number" id="autoCleanupDays" value="${settings.autoCleanupDays || 7}" min="1" max="365" onchange="updateSystemSettings()" style="width:80px;padding:8px;border:1px solid #d9d9d9;border-radius:4px;">
+                      <span style="font-size:13px;color:#666;">天（超过此天数未登录的用户将被自动删除）</span>
                     </div>
                   </div>
                 </div>
@@ -2644,6 +2740,8 @@ async function handleAdminPanel(request, env, adminPath) {
           const customLink1Url = document.getElementById('customLink1Url').value;
           const customLink2Name = document.getElementById('customLink2Name').value;
           const customLink2Url = document.getElementById('customLink2Url').value;
+          const enableAutoCleanup = document.getElementById('enableAutoCleanupCheck').checked;
+          const autoCleanupDays = document.getElementById('autoCleanupDays').value;
           const fd = new FormData();
           fd.append('siteName', siteName);
           fd.append('enableRegister', enableRegister);
@@ -2657,8 +2755,15 @@ async function handleAdminPanel(request, env, adminPath) {
           fd.append('customLink1Url', customLink1Url);
           fd.append('customLink2Name', customLink2Name);
           fd.append('customLink2Url', customLink2Url);
+          fd.append('enableAutoCleanup', enableAutoCleanup);
+          fd.append('autoCleanupDays', autoCleanupDays);
           
           // 更新试用天数选择器的禁用状态
+          const autoCleanupDaysInput = document.getElementById('autoCleanupDays');
+          if (autoCleanupDaysInput) {
+            autoCleanupDaysInput.parentElement.parentElement.style.opacity = enableAutoCleanup ? '1' : '0.5';
+            autoCleanupDaysInput.parentElement.parentElement.style.pointerEvents = enableAutoCleanup ? 'auto' : 'none';
+          }
           const trialDaysSelect = document.getElementById('trialDays');
           if (trialDaysSelect) {
             trialDaysSelect.parentElement.style.opacity = enableTrial ? '1' : '0.5';

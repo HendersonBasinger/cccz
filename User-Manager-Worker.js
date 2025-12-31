@@ -129,6 +129,10 @@ export default {
       // 数据导出
       if (path === '/api/admin/export') return await handleAdminExportData(request, env);
     }
+    if (request.method === 'POST') {
+      // 数据导入
+      if (path === '/api/admin/import') return await handleAdminImportData(request, env);
+    }
     if (request.method === 'GET') {
       if (path === '/api/user/orders') return await handleUserGetOrders(request, env);
     }
@@ -1056,6 +1060,175 @@ async function handleAdminExportData(request, env) {
     } catch (e) {
         console.error('数据导出错误:', e);
         return new Response('导出失败: ' + e.message, { status: 500 });
+    }
+}
+
+// API: 数据导入
+async function handleAdminImportData(request, env) {
+    if (!(await checkAuth(request, env))) {
+        return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { 
+            status: 401,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+    }
+
+    try {
+        const importData = await request.json();
+        
+        // 验证数据格式
+        if (!importData.data) {
+            return new Response(JSON.stringify({ success: false, error: '无效的备份文件格式' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json; charset=utf-8' }
+            });
+        }
+
+        const data = importData.data;
+        let importedCounts = {
+            users: 0,
+            userAccounts: 0,
+            settings: 0,
+            plans: 0,
+            orders: 0,
+            announcements: 0,
+            inviteCodes: 0,
+            paymentChannels: 0
+        };
+
+        // 1. 导入 settings
+        if (data.settings && data.settings.length > 0) {
+            for (const setting of data.settings) {
+                await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)")
+                    .bind(setting.key, setting.value)
+                    .run();
+                importedCounts.settings++;
+            }
+        }
+
+        // 2. 导入 users
+        if (data.users && data.users.length > 0) {
+            for (const user of data.users) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO users (uuid, name, expiry, create_at, enabled) VALUES (?, ?, ?, ?, ?)"
+                    ).bind(user.uuid, user.name, user.expiry, user.create_at, user.enabled).run();
+                    importedCounts.users++;
+                } catch (e) {
+                    console.error('导入用户失败:', user.uuid, e.message);
+                }
+            }
+        }
+
+        // 3. 导入 user_accounts (不导入密码，需要用户重新设置)
+        if (data.userAccounts && data.userAccounts.length > 0) {
+            for (const account of data.userAccounts) {
+                try {
+                    // 检查是否已存在
+                    const existing = await env.DB.prepare(
+                        "SELECT id FROM user_accounts WHERE username = ? OR uuid = ?"
+                    ).bind(account.username, account.uuid).first();
+                    
+                    if (!existing) {
+                        // 生成一个临时密码hash (用户名作为默认密码)
+                        const tempPasswordHash = await hashPassword(account.username);
+                        await env.DB.prepare(
+                            "INSERT INTO user_accounts (username, password_hash, email, uuid, created_at, last_login) VALUES (?, ?, ?, ?, ?, ?)"
+                        ).bind(account.username, tempPasswordHash, account.email || '', account.uuid, account.created_at, account.last_login).run();
+                        importedCounts.userAccounts++;
+                    }
+                } catch (e) {
+                    console.error('导入账号失败:', account.username, e.message);
+                }
+            }
+        }
+
+        // 4. 导入 plans
+        if (data.plans && data.plans.length > 0) {
+            for (const plan of data.plans) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO plans (id, name, duration, description, price, enabled, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    ).bind(plan.id, plan.name, plan.duration, plan.description, plan.price, plan.enabled, plan.created_at).run();
+                    importedCounts.plans++;
+                } catch (e) {
+                    console.error('导入套餐失败:', plan.name, e.message);
+                }
+            }
+        }
+
+        // 5. 导入 orders
+        if (data.orders && data.orders.length > 0) {
+            for (const order of data.orders) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO orders (id, order_no, user_id, plan_id, plan_name, duration, price, status, created_at, paid_at, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    ).bind(order.id, order.order_no, order.user_id, order.plan_id, order.plan_name, order.duration, order.price, order.status, order.created_at, order.paid_at, order.payment_method).run();
+                    importedCounts.orders++;
+                } catch (e) {
+                    console.error('导入订单失败:', order.order_no, e.message);
+                }
+            }
+        }
+
+        // 6. 导入 announcements
+        if (data.announcements && data.announcements.length > 0) {
+            for (const ann of data.announcements) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO announcements (id, title, content, enabled, created_at) VALUES (?, ?, ?, ?, ?)"
+                    ).bind(ann.id, ann.title, ann.content, ann.enabled, ann.created_at).run();
+                    importedCounts.announcements++;
+                } catch (e) {
+                    console.error('导入公告失败:', ann.title, e.message);
+                }
+            }
+        }
+
+        // 7. 导入 invite_codes
+        if (data.inviteCodes && data.inviteCodes.length > 0) {
+            for (const invite of data.inviteCodes) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO invite_codes (id, code, trial_days, max_uses, used_count, enabled, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    ).bind(invite.id, invite.code, invite.trial_days, invite.max_uses, invite.used_count, invite.enabled, invite.created_at, invite.expires_at).run();
+                    importedCounts.inviteCodes++;
+                } catch (e) {
+                    console.error('导入邀请码失败:', invite.code, e.message);
+                }
+            }
+        }
+
+        // 8. 导入 payment_channels
+        if (data.paymentChannels && data.paymentChannels.length > 0) {
+            for (const channel of data.paymentChannels) {
+                try {
+                    await env.DB.prepare(
+                        "INSERT OR REPLACE INTO payment_channels (id, name, type, config, enabled, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+                    ).bind(channel.id, channel.name, channel.type, channel.config, channel.enabled, channel.created_at).run();
+                    importedCounts.paymentChannels++;
+                } catch (e) {
+                    console.error('导入支付通道失败:', channel.name, e.message);
+                }
+            }
+        }
+
+        const message = `导入完成！用户:${importedCounts.users} 账号:${importedCounts.userAccounts} 设置:${importedCounts.settings} 套餐:${importedCounts.plans} 订单:${importedCounts.orders} 公告:${importedCounts.announcements} 邀请码:${importedCounts.inviteCodes} 支付通道:${importedCounts.paymentChannels}`;
+        
+        return new Response(JSON.stringify({ 
+            success: true, 
+            message: message,
+            imported: importedCounts
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+
+    } catch (e) {
+        console.error('数据导入错误:', e);
+        return new Response(JSON.stringify({ success: false, error: '导入失败: ' + e.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
     }
 }
 
@@ -2140,10 +2313,21 @@ async function handleAdminPanel(request, env, adminPath) {
                 <h3 style="margin-bottom:15px;">📦 数据备份</h3>
                 <div style="padding:15px;background:#f6ffed;border-radius:8px;margin-bottom:15px;">
                   <div style="margin-bottom:10px;">
-                    <span style="font-weight:600;display:block;margin-bottom:4px;">导出全部数据</span>
-                    <div style="font-size:13px;color:#666;">导出用户、设置、套餐、订单、公告、邀请码等所有数据为 JSON 文件，可用于备份或迁移到服务器</div>
+                    <span style="font-weight:600;display:block;margin-bottom:4px;">📥 导出全部数据</span>
+                    <div style="font-size:13px;color:#666;">导出用户、设置、套餐、订单、公告、邀请码等所有数据为 JSON 文件</div>
                   </div>
                   <button onclick="exportData()" class="btn-success" style="margin-top:10px;">📥 导出数据</button>
+                </div>
+                <div style="padding:15px;background:#e6f7ff;border-radius:8px;margin-bottom:15px;">
+                  <div style="margin-bottom:10px;">
+                    <span style="font-weight:600;display:block;margin-bottom:4px;">📤 导入数据</span>
+                    <div style="font-size:13px;color:#666;">从备份文件恢复数据，将覆盖现有数据，请谨慎操作</div>
+                  </div>
+                  <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(this)">
+                  <button onclick="document.getElementById('importFile').click()" class="btn-primary" style="margin-top:10px;">📤 选择文件导入</button>
+                </div>
+                <div style="padding:10px;background:#fff7e6;border-radius:4px;font-size:12px;color:#d46b08;">
+                  ⚠️ 导入操作会覆盖现有数据，建议先导出当前数据作为备份
                 </div>
               </div>
             </div>
@@ -3212,6 +3396,50 @@ async function handleAdminPanel(request, env, adminPath) {
             } catch(e) {
                 toast('❌ 导出失败: ' + e.message);
             }
+        }
+        
+        // 数据导入
+        async function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (!confirm('⚠️ 导入操作会覆盖现有数据！\n\n确定要导入文件 "' + file.name + '" 吗？')) {
+                input.value = '';
+                return;
+            }
+            
+            toast('⏳ 正在导入数据...');
+            
+            try {
+                const text = await file.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    toast('❌ 文件格式错误，请选择有效的JSON备份文件');
+                    input.value = '';
+                    return;
+                }
+                
+                const res = await fetch('/api/admin/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                
+                if (res.ok && result.success) {
+                    toast('✅ ' + result.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    toast('❌ 导入失败: ' + (result.error || '未知错误'));
+                }
+            } catch(e) {
+                toast('❌ 导入失败: ' + e.message);
+            }
+            
+            input.value = '';
         }
 
         // 切换功能区
