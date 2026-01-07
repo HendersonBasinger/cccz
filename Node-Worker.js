@@ -114,9 +114,50 @@ export default {
         
         // HTTP 请求
         if (req.method === 'GET') {
-            // 根路径 - 健康检查
+            // 根路径 - 官网入口
             if (url.pathname === '/') {
-                return new Response('<h1>✅ Node Worker Running</h1>', {
+                await syncRemoteConfig();
+                let websiteUrl = cachedData.websiteUrl || 'https://example.com';
+                
+                // 确保 URL 包含协议
+                if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+                    websiteUrl = 'https://' + websiteUrl;
+                }
+                
+                const displayUrl = websiteUrl.replace(/^https?:\/\//, '');
+                
+                const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFly 官网入口</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;border-radius:15px;padding:40px 30px;text-align:center;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.logo{font-size:40px;margin-bottom:15px}
+h1{color:#333;font-size:24px;margin-bottom:10px}
+.sub{color:#666;font-size:14px;margin-bottom:25px}
+.btn{display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 40px;border-radius:25px;font-size:16px;transition:.3s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(102,126,234,.5)}
+.url{color:#999;font-size:12px;margin-top:20px;word-break:break-all}
+.status{background:#10b981;color:#fff;padding:5px 12px;border-radius:15px;font-size:12px;margin-bottom:15px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="status">✅ 运行中</div>
+<div class="logo">🚀</div>
+<h1>CFly 官网入口</h1>
+<p class="sub">点击下方按钮访问官网</p>
+<a href="${websiteUrl}" class="btn" target="_blank" rel="noopener noreferrer">进入官网 ↗</a>
+<div class="url">${displayUrl}</div>
+</div>
+</body>
+</html>`;
+                
+                return new Response(html, {
                     status: 200,
                     headers: { 'Content-Type': 'text/html; charset=utf-8' }
                 });
