@@ -1,22 +1,47 @@
 import { connect } from 'cloudflare:sockets';
 
-// =============================================================================
-// 配置区域 - 请根据实际情况修改
-// =============================================================================
-// 管理端 API 地址 (不要添加尾随斜杠)
+// 配置区域
 const REMOTE_API_URL = 'https://uuid.hailizi.workers.dev/api/users';
-
-// API 认证令牌 (可选，如果管理端需要认证)
 const API_TOKEN = '';
-
-// 本地兜底配置 (当无法连接管理端时使用)
 const FALLBACK_CONFIG = {
-    proxyIPs: ['bestproxy.030101.xyz:443'],
+    proxyIPs: ['cdn.xn--b6gac.eu.org'],
     bestDomains: ['bestcf.030101.xyz:443', 'japan.com:443', 'www.visa.com.sg:443']
 };
 
-// 缓存配置
-const CACHE_TTL = 60000; // 缓存时间 60 秒
+// 分区域 ProxyIP（兜底用）
+const REGION_PROXY_IPS = { EU: 'cdn.xn--b6gac.eu.org', AS: 'cdn-all.xn--b6gac.eu.org', JP: 'cdn-all.xn--b6gac.eu.org', US: 'cdn.xn--b6gac.eu.org' };
+const COLO_REGIONS = {
+    JP: new Set(['FUK', 'ICN', 'KIX', 'NRT', 'OKA']),
+    EU: new Set(['AMS', 'CDG', 'FRA', 'LHR', 'DUB', 'MAD', 'MXP', 'ZRH', 'VIE', 'WAW', 'PRG', 'BRU', 'CPH', 'HEL', 'OSL', 'ARN', 'IST', 'ATH']),
+    AS: new Set(['HKG', 'SIN', 'BKK', 'KUL', 'SGN', 'MNL', 'CGK', 'DEL', 'BOM', 'SYD', 'MEL', 'TPE', 'SEL'])
+};
+const coloToProxyMap = new Map();
+for (const [region, colos] of Object.entries(COLO_REGIONS)) {
+    for (const colo of colos) coloToProxyMap.set(colo, REGION_PROXY_IPS[region]);
+}
+
+function getProxyIPByColo(colo) {
+    return coloToProxyMap.get(colo) || REGION_PROXY_IPS.US;
+}
+
+function smartSelectProxyIP(proxyList, colo) {
+    if (!proxyList?.length) return null;
+    const coloToRegion = {};
+    for (const [region, colos] of Object.entries(COLO_REGIONS)) {
+        for (const c of colos) coloToRegion[c] = region;
+    }
+    const currentRegion = coloToRegion[colo];
+    const regionKw = { JP: ['jp'], AS: ['sg', 'hk', 'kr', 'tw'], EU: ['de', 'eu', 'uk'], US: ['us'] };
+    if (currentRegion) {
+        for (const proxy of proxyList) {
+            const lp = proxy.toLowerCase();
+            for (const kw of (regionKw[currentRegion] || [])) if (lp.includes(kw)) return proxy;
+        }
+    }
+    return proxyList[0];
+}
+
+const CACHE_TTL = 60000;
 
 // =============================================================================
 // 全局状态
@@ -24,79 +49,34 @@ const CACHE_TTL = 60000; // 缓存时间 60 秒
 let cachedData = {
     users: {},
     settings: FALLBACK_CONFIG,
+    websiteUrl: '',  // 初始化为空字符串，避免 undefined 错误
     lastUpdate: 0
 };
 
 // =============================================================================
-// 地理位置智能匹配
+// 地理位置智能匹配（精简版）
 // =============================================================================
-// 地区关键词映射表（支持中英文、国家/地区代码）
 const GEO_KEYWORDS = {
-    'HK': ['hk', 'hongkong', 'hong kong', '香港', 'hkg'],
-    'TW': ['tw', 'taiwan', '台湾', 'taipei', '台北'],
-    'JP': ['jp', 'japan', '日本', 'tokyo', '东京'],
-    'SG': ['sg', 'singapore', '新加坡', 'singapo'],
-    'US': ['us', 'usa', 'america', '美国', 'united states'],
-    'KR': ['kr', 'korea', '韩国', 'seoul', '首尔'],
-    'UK': ['uk', 'london', '英国', 'britain'],
-    'DE': ['de', 'germany', '德国', 'frankfurt', '法兰克福'],
-    'FR': ['fr', 'france', '法国', 'paris', '巴黎'],
-    'CA': ['ca', 'canada', '加拿大', 'toronto'],
-    'AU': ['au', 'australia', '澳大利亚', 'sydney'],
-    'CN': ['cn', 'china', '中国', 'beijing', 'shanghai'],
-    'IN': ['in', 'india', '印度', 'mumbai'],
-    'RU': ['ru', 'russia', '俄罗斯', 'moscow'],
-    'BR': ['br', 'brazil', '巴西', 'sao paulo'],
-    'NL': ['nl', 'netherlands', '荷兰', 'amsterdam'],
+    'HK': ['hk', '香港'], 'TW': ['tw', '台湾'], 'JP': ['jp', '日本'],
+    'SG': ['sg', '新加坡'], 'US': ['us', '美国'], 'KR': ['kr', '韩国'],
+    'DE': ['de', '德国'], 'UK': ['uk', '英国']
 };
 
-/**
- * 从字符串中提取地理位置标识
- * @param {string} str - 待检测的字符串（域名或IP描述）
- * @return {string|null} - 地区代码（如 'HK', 'JP'）或 null
- */
 function extractGeoLocation(str) {
     if (!str) return null;
-    const lowerStr = str.toLowerCase();
-    
-    for (const [region, keywords] of Object.entries(GEO_KEYWORDS)) {
-        for (const keyword of keywords) {
-            if (lowerStr.includes(keyword)) {
-                return region;
-            }
-        }
+    const s = str.toLowerCase();
+    for (const [region, kws] of Object.entries(GEO_KEYWORDS)) {
+        for (const kw of kws) if (s.includes(kw)) return region;
     }
     return null;
 }
 
-/**
- * 智能排序代理列表，优先使用地理位置匹配的代理
- * @param {Array<string>} proxyList - 原始代理列表
- * @param {string} targetAddress - 目标地址
- * @return {Array<string>} - 排序后的代理列表
- */
 function smartSortProxies(proxyList, targetAddress) {
-    if (!proxyList || proxyList.length === 0) return [];
-    
+    if (!proxyList?.length) return [];
     const targetGeo = extractGeoLocation(targetAddress);
-    
-    // 如果目标地址没有地理位置信息，保持原顺序
     if (!targetGeo) return [...proxyList];
-    
-    // 分类代理：匹配的、不匹配的
-    const matched = [];
-    const unmatched = [];
-    
-    proxyList.forEach(proxy => {
-        const proxyGeo = extractGeoLocation(proxy);
-        if (proxyGeo === targetGeo) {
-            matched.push(proxy);
-        } else {
-            unmatched.push(proxy);
-        }
-    });
-    
-    // 匹配的代理优先，然后是其他代理
+    const matched = [], unmatched = [];
+    proxyList.forEach(p => (extractGeoLocation(p) === targetGeo ? matched : unmatched).push(p));
     return [...matched, ...unmatched];
 }
 
@@ -114,9 +94,62 @@ export default {
         
         // HTTP 请求
         if (req.method === 'GET') {
-            // 根路径 - 健康检查
+            // 根路径 - 官网入口
             if (url.pathname === '/') {
-                return new Response('<h1>✅ Node Worker Running</h1>', {
+                // 尝试同步配置，但不能因为同步失败而阻塞首页访问
+                try {
+                    await syncRemoteConfig();
+                } catch (e) {
+                    console.error('Sync config failed on homepage:', e);
+                }
+                
+                // 安全获取官网地址，多重兜底
+                let websiteUrl = cachedData.websiteUrl 
+                    || (cachedData.settings && cachedData.settings.subUrl) 
+                    || 'https://example.com';
+                
+                // 确保 websiteUrl 是字符串
+                websiteUrl = String(websiteUrl || 'https://example.com');
+                
+                // 确保 URL 包含协议
+                if (!websiteUrl.startsWith('http://') && !websiteUrl.startsWith('https://')) {
+                    websiteUrl = 'https://' + websiteUrl;
+                }
+                
+                const displayUrl = websiteUrl.replace(/^https?:\/\//, '');
+                
+                const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFly 官网入口</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;border-radius:15px;padding:40px 30px;text-align:center;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.logo{font-size:40px;margin-bottom:15px}
+h1{color:#333;font-size:24px;margin-bottom:10px}
+.sub{color:#666;font-size:14px;margin-bottom:25px}
+.btn{display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;padding:12px 40px;border-radius:25px;font-size:16px;transition:.3s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(102,126,234,.5)}
+.url{color:#999;font-size:12px;margin-top:20px;word-break:break-all}
+.status{background:#10b981;color:#fff;padding:5px 12px;border-radius:15px;font-size:12px;margin-bottom:15px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="box">
+<div class="status">✅ 运行中</div>
+<div class="logo">🚀</div>
+<h1>CFly 官网入口</h1>
+<p class="sub">点击下方按钮访问官网</p>
+<a href="${websiteUrl}" class="btn" target="_blank" rel="noopener noreferrer">进入官网 ↗</a>
+<div class="url">${displayUrl}</div>
+</div>
+</body>
+</html>`;
+                
+                return new Response(html, {
                     status: 200,
                     headers: { 'Content-Type': 'text/html; charset=utf-8' }
                 });
@@ -189,12 +222,16 @@ async function syncRemoteConfig(forceRefresh = false) {
             cachedData.users = data.users;
         }
         
-        // 获取官网地址（从 subUrl 中提取）
-        if (data.settings && data.settings.subUrl) {
-            cachedData.websiteUrl = data.settings.subUrl;
+        // 获取官网地址（优先使用专门的 websiteUrl，否则使用 subUrl）
+        if (data.settings) {
+            if (data.settings.websiteUrl) {
+                cachedData.websiteUrl = data.settings.websiteUrl;
+            } else if (data.settings.subUrl) {
+                cachedData.websiteUrl = data.settings.subUrl;
+            }
         }
         
-        // 更新设置
+        // 更新设置（确保 settings 不为 null）
         if (data.settings && typeof data.settings === 'object') {
             const settings = {};
             
@@ -262,7 +299,7 @@ function generateVlessLinks(workerDomain, uuid, userName, expiry, websiteUrl) {
     
     // 格式化到期时间
     function formatExpiry(timestamp) {
-        if (!timestamp) return '永久有效';
+        if (!timestamp) return '未激活';
         const d = new Date(timestamp);
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -438,10 +475,20 @@ async function handleWebSocket(req) {
     const mode = url.searchParams.get('mode') || 'auto';
     const proxyParam = url.searchParams.get('proxyip');
     
-    // 确定代理 IP 列表
-    let proxyIPs = cachedData.settings.proxyIPs || FALLBACK_CONFIG.proxyIPs;
-    if (proxyParam) {
-        proxyIPs = [proxyParam];
+    // 获取 CF 机房代码，用于智能选择 ProxyIP
+    const colo = req.cf?.colo || '';
+    
+    // 获取管理后台配置的 ProxyIP 列表
+    const configuredProxyIPs = cachedData.settings.proxyIPs || FALLBACK_CONFIG.proxyIPs;
+    
+    // 确定代理 IP：优先 URL 参数 > 从配置列表中智能选择 > 硬编码兜底
+    let proxyIP = proxyParam;
+    if (!proxyIP && configuredProxyIPs.length > 0) {
+        // 从配置的列表中智能选择（根据地理位置匹配）
+        proxyIP = smartSelectProxyIP(configuredProxyIPs, colo);
+    }
+    if (!proxyIP) {
+        proxyIP = getProxyIPByColo(colo);
     }
     
     let remoteSocket = null;
@@ -632,58 +679,29 @@ async function handleWebSocket(req) {
                 return;
             }
             
-            // TCP 模式 - 建立连接（智能地理位置匹配 + 重试机制）
+            // TCP 模式 - 建立连接
+            // 策略：直连优先，失败则用 ProxyIP（解决 CF→CF 的 1034 错误）
             let socket = null;
             
-            // 策略1：优先直连
+            // 1. 先尝试直连
             try {
-                socket = connect({
-                    hostname: targetAddress,
-                    port: targetPort
-                });
+                socket = connect({ hostname: targetAddress, port: targetPort });
                 await socket.opened;
-            } catch (directError) {
-                // 策略2：直连失败，使用智能排序的代理列表
-                if (proxyIPs.length > 0) {
-                    // 🌍 智能排序：根据目标地址地理位置优先选择同地区代理
-                    const sortedProxies = smartSortProxies(proxyIPs, targetAddress);
-                    let lastError = null;
-                    
-                    for (let i = 0; i < sortedProxies.length; i++) {
-                        const proxyEntry = sortedProxies[i];
-                        const proxyParts = proxyEntry.split(':');
-                        const proxyHost = proxyParts[0];
-                        const proxyPort = proxyParts[1] ? parseInt(proxyParts[1]) : targetPort;
-                        
-                        try {
-                            socket = connect({
-                                hostname: proxyHost,
-                                port: proxyPort
-                            });
-                            await socket.opened;
-                            // 连接成功，跳出循环
-                            break;
-                        } catch (proxyError) {
-                            lastError = proxyError;
-                            // 继续尝试下一个代理
-                            continue;
-                        }
-                    }
-                    
-                    // 所有代理都失败
-                    if (!socket) {
-                        console.error('All proxy attempts failed:', lastError);
-                        return;
-                    }
-                } else {
-                    console.error('Direct connection failed and no proxy available');
-                    return;
+            } catch (e) {
+                // 2. 直连失败，使用 ProxyIP
+                socket = null;
+                if (proxyIP && mode !== 'direct') {
+                    const [proxyHost, proxyPort] = proxyIP.includes(':') 
+                        ? [proxyIP.split(':')[0], parseInt(proxyIP.split(':')[1])] 
+                        : [proxyIP, 443];
+                    try {
+                        socket = connect({ hostname: proxyHost, port: proxyPort });
+                        await socket.opened;
+                    } catch (e) { socket = null; }
                 }
             }
             
-            if (!socket) {
-                return;
-            }
+            if (!socket) return;
             
             remoteSocket = socket;
             
