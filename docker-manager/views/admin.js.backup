@@ -1,0 +1,583 @@
+/**
+ * 管理员面板视图
+ */
+
+const db = require('../database');
+
+// 北京时间格式化
+function formatBeijingDateTime(date) {
+    if (!date) return '-';
+    const d = new Date(date);
+    const beijingTime = new Date(d.getTime() + (8 * 60 * 60 * 1000));
+    const year = beijingTime.getUTCFullYear();
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+    const hour = String(beijingTime.getUTCHours()).padStart(2, '0');
+    const minute = String(beijingTime.getUTCMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function formatBeijingDate(date) {
+    if (!date) return '-';
+    const d = new Date(date);
+    const beijingTime = new Date(d.getTime() + (8 * 60 * 60 * 1000));
+    const year = beijingTime.getUTCFullYear();
+    const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// 渲染管理员登录页面
+function renderAdminLoginPage(adminPath) {
+    return `
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+      <title>管理员登录</title>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-box h2 { text-align: center; margin-bottom: 30px; color: #333; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #666; font-size: 14px; }
+        input[type=text], input[type=password] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus { outline: none; border-color: #667eea; }
+        button { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .error { color: #ff4d4f; font-size: 14px; margin-top: 10px; text-align: center; display: none; }
+      </style>
+    </head>
+    <body>
+      <div class="login-box">
+        <h2>🔐 管理员登录</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="password" name="password" placeholder="请输入密码" required>
+          </div>
+          <button type="submit">登 录</button>
+          <div class="error" id="errorMsg"></div>
+        </form>
+      </div>
+      <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const errorMsg = document.getElementById('errorMsg');
+          errorMsg.style.display = 'none';
+          
+          try {
+            const formData = new FormData(this);
+            const response = await fetch('/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: formData.get('username'),
+                password: formData.get('password')
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              window.location.href = '${adminPath}';
+            } else {
+              errorMsg.textContent = result.error || '登录失败';
+              errorMsg.style.display = 'block';
+            }
+          } catch (e) {
+            errorMsg.textContent = '网络错误，请重试';
+            errorMsg.style.display = 'block';
+          }
+        });
+      </script>
+    </body>
+    </html>
+    `;
+}
+
+// 渲染管理员面板
+async function renderAdminPanel(adminPath) {
+    const usersData = db.getAllUsers();
+    const rawSettings = db.getSettings();
+    const settings = rawSettings || { proxyIPs: [], bestDomains: [], subUrl: "" };
+    
+    let proxyIPsList = settings.proxyIPs || [];
+    let bestDomainsList = settings.bestDomains || [];
+    let subUrl = settings.subUrl || "";
+    let websiteUrl = settings.websiteUrl || "";
+    let siteName = settings.siteName || "CFly";
+
+    const rows = usersData.map(u => {
+        const isExpired = u.expiry && u.expiry < Date.now();
+        const isEnabled = u.enabled;
+        
+        const expiryText = u.expiry ? formatBeijingDateTime(u.expiry) : '未激活';
+        const expiryVal = u.expiry ? formatBeijingDate(u.expiry) : '';
+        const createDate = u.createAt ? formatBeijingDateTime(u.createAt) : '-';
+        
+        let statusHtml = !u.expiry ? '<span class="tag disabled">未激活</span>' : 
+            (isExpired ? '<span class="tag expired">已过期</span>' : 
+            (!isEnabled ? '<span class="tag disabled">已禁用</span>' : '<span class="tag active">正常</span>'));
+        
+        const safeName = (u.name || '').replace(/'/g, "\\'");
+        
+        return `<tr data-uuid="${u.uuid}">
+            <td><input type="checkbox" class="u-check" value="${u.uuid}"></td>
+            <td class="mono" onclick="copy('${u.uuid}')">${u.uuid}</td>
+            <td>${u.name}</td>
+            <td>${createDate}</td>
+            <td>${expiryText}</td>
+            <td>${statusHtml}</td>
+            <td class="actions">
+                <button class="btn-action btn-copy" onclick="copySubOriginal('${u.uuid}')">订阅</button>
+                <button class="btn-action btn-edit" onclick="openEdit('${u.uuid}', '${safeName}', '${expiryVal}')">编辑</button>
+                ${isEnabled && !isExpired ? `<button class="btn-action btn-danger" onclick="toggleStatus('${u.uuid}', false)">禁用</button>` : ''}
+                ${!isEnabled && !isExpired ? `<button class="btn-action btn-success" onclick="toggleStatus('${u.uuid}', true)">启用</button>` : ''}
+                <button class="btn-action btn-del" onclick="delUser('${u.uuid}')">删除</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    return `
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <title>${siteName} 控制面板</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            :root { --primary: #1890ff; --bg: #f0f2f5; --danger: #ff4d4f; --success: #52c41a; --warning: #faad14; --purple: #722ed1; --grey: #bfbfbf; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #333; }
+            
+            .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+            .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .header h1 { font-size: 24px; color: #333; }
+            .header-actions { display: flex; gap: 10px; }
+            
+            .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .card h3 { margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+            
+            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+            .stat-box { padding: 20px; border-radius: 8px; text-align: center; }
+            .stat-box .number { font-size: 32px; font-weight: bold; }
+            .stat-box .label { margin-top: 8px; color: #666; }
+            
+            label { display: block; margin-bottom: 8px; font-size: 14px; color: #666; font-weight: 600; }
+            input[type=text], input[type=date], input[type=password], textarea { width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-family: inherit; }
+            input:focus, textarea:focus { border-color: var(--primary); outline: none; }
+            textarea { resize: vertical; min-height: 80px; font-family: monospace; }
+            
+            button { padding: 8px 16px; color: white; border: none; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+            button:hover { opacity: 0.9; }
+            .btn-primary { background: var(--primary); }
+            .btn-danger { background: var(--danger); }
+            .btn-success { background: var(--success); }
+            .btn-warning { background: var(--warning); }
+            
+            table { width: 100%; border-collapse: collapse; font-size: 14px; }
+            th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+            th { background: #fafafa; color: #666; font-weight: 600; }
+            tr:hover { background: #fdfdfd; }
+            .mono { font-family: monospace; color: var(--primary); cursor: pointer; }
+            
+            .tag { font-size: 12px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+            .tag.active { color: var(--success); background: #f6ffed; border: 1px solid #b7eb8f; }
+            .tag.expired { color: var(--danger); background: #fff1f0; border: 1px solid #ffa39e; }
+            .tag.disabled { color: #999; background: #f5f5f5; border: 1px solid #d9d9d9; }
+            
+            .actions { white-space: nowrap; }
+            .btn-action { padding: 4px 10px; font-size: 12px; margin-right: 4px; }
+            .btn-copy { background: var(--purple); }
+            .btn-edit { background: var(--warning); }
+            .btn-del { background: #ff7875; }
+            
+            .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+            .tab { padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 4px; cursor: pointer; }
+            .tab.active { background: var(--primary); color: white; }
+            
+            .section { display: none; }
+            .section.active { display: block; }
+            
+            .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+            .modal { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; }
+            .modal h3 { margin-bottom: 20px; }
+            
+            #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 4px; opacity: 0; transition: 0.3s; z-index: 200; }
+            #toast.show { opacity: 1; bottom: 50px; }
+            
+            .config-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f9f9f9; border-radius: 4px; margin-bottom: 5px; font-family: monospace; font-size: 13px; }
+            .config-item .del-btn { color: var(--danger); cursor: pointer; font-weight: bold; }
+            
+            @media (max-width: 768px) {
+                .header { flex-direction: column; gap: 15px; }
+                .grid { grid-template-columns: 1fr; }
+                table { font-size: 12px; }
+                th, td { padding: 8px 5px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚀 ${siteName} 控制面板</h1>
+                <div class="header-actions">
+                    <span style="color:#666;">${formatBeijingDate(Date.now())}</span>
+                    <button onclick="adminLogout()" class="btn-danger">退出登录</button>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" data-section="dashboard" onclick="switchTab('dashboard')">📊 仪表盘</button>
+                <button class="tab" data-section="users" onclick="switchTab('users')">👥 用户管理</button>
+                <button class="tab" data-section="config" onclick="switchTab('config')">⚙️ 配置管理</button>
+            </div>
+            
+            <!-- 仪表盘 -->
+            <div id="section-dashboard" class="section active">
+                <div class="card">
+                    <h3>系统概览</h3>
+                    <div class="grid">
+                        <div class="stat-box" style="background:#e6f7ff;">
+                            <div class="number" style="color:var(--primary);">${usersData.length}</div>
+                            <div class="label">总用户数</div>
+                        </div>
+                        <div class="stat-box" style="background:#f6ffed;">
+                            <div class="number" style="color:var(--success);">${usersData.filter(u => u.enabled && (!u.expiry || u.expiry > Date.now())).length}</div>
+                            <div class="label">活跃用户</div>
+                        </div>
+                        <div class="stat-box" style="background:#fff7e6;">
+                            <div class="number" style="color:var(--warning);">${bestDomainsList.length}</div>
+                            <div class="label">配置节点数</div>
+                        </div>
+                        <div class="stat-box" style="background:#fff1f0;">
+                            <div class="number" style="color:var(--danger);">${usersData.filter(u => u.expiry && u.expiry < Date.now()).length}</div>
+                            <div class="label">已过期用户</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>系统设置</h3>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="enableRegisterCheck" ${settings.enableRegister ? 'checked' : ''} onchange="updateSystemSettings()">
+                            <span>开放用户注册</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="autoApproveOrderCheck" ${settings.autoApproveOrder ? 'checked' : ''} onchange="updateSystemSettings()">
+                            <span>自动审核免费订单</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="enableTrialCheck" ${settings.enableTrial ? 'checked' : ''} onchange="updateSystemSettings()">
+                            <span>新用户试用</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="requireInviteCodeCheck" ${settings.requireInviteCode ? 'checked' : ''} onchange="updateSystemSettings()">
+                            <span>注册需邀请码</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 用户管理 -->
+            <div id="section-users" class="section">
+                <div class="card">
+                    <h3>添加用户</h3>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;">
+                        <div><label>用户名称</label><input type="text" id="addName" placeholder="用户备注名"></div>
+                        <div><label>到期日期</label><input type="date" id="addExpiry"></div>
+                        <div><label>前端用户名</label><input type="text" id="addFrontUsername" placeholder="留空自动生成"></div>
+                        <div><label>前端密码</label><input type="text" id="addFrontPassword" placeholder="留空与用户名相同"></div>
+                    </div>
+                    <div style="margin-top:15px;"><label>自定义 UUID (可选)</label><textarea id="addUUIDs" placeholder="留空自动生成，多个UUID用换行分隔"></textarea></div>
+                    <div style="margin-top:15px;"><button onclick="addUser()" class="btn-primary">添加用户</button></div>
+                </div>
+                
+                <div class="card">
+                    <h3>用户列表 (${usersData.length})</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="checkAll" onchange="toggleCheckAll()"></th>
+                                    <th>UUID</th>
+                                    <th>名称</th>
+                                    <th>创建时间</th>
+                                    <th>到期时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTable">${rows}</tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top:15px;display:flex;gap:10px;">
+                        <button onclick="batchEnable()" class="btn-success">批量启用</button>
+                        <button onclick="batchDisable()" class="btn-warning">批量禁用</button>
+                        <button onclick="batchDelete()" class="btn-danger">批量删除</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 配置管理 -->
+            <div id="section-config" class="section">
+                <div class="card">
+                    <h3>订阅配置</h3>
+                    <div style="margin-bottom:15px;">
+                        <label>节点订阅地址</label>
+                        <input type="text" id="subUrl" value="${subUrl}" placeholder="用于生成订阅链接的地址">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label>官网地址</label>
+                        <input type="text" id="websiteUrl" value="${websiteUrl}" placeholder="显示在订阅中的官网地址">
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>反代 IP 列表</h3>
+                    <div style="margin-bottom:10px;">
+                        <textarea id="proxyIPInput" placeholder="一行一个，例如：ProxyIP.HK.CMLiussss.net:443">${proxyIPsList.join('\n')}</textarea>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>优选域名列表</h3>
+                    <div style="margin-bottom:10px;">
+                        <textarea id="bestDomainsInput" placeholder="一行一个，格式：域名:端口#别名" style="min-height:150px;">${bestDomainsList.join('\n')}</textarea>
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <button onclick="fetchBestIPs('v4')" class="btn-primary">获取 IPv4 优选</button>
+                        <button onclick="fetchBestIPs('v6')" class="btn-primary">获取 IPv6 优选</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top:20px;">
+                    <button onclick="saveSettings()" class="btn-primary" style="width:100%;padding:15px;font-size:16px;">💾 保存所有配置</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 编辑弹窗 -->
+        <div class="modal-overlay" id="editModal">
+            <div class="modal">
+                <h3>编辑用户</h3>
+                <input type="hidden" id="editUUID">
+                <div style="margin-bottom:15px;"><label>名称</label><input type="text" id="editName"></div>
+                <div style="margin-bottom:15px;"><label>到期日期</label><input type="date" id="editExpiry"></div>
+                <div style="margin-bottom:15px;"><label>新密码 (留空不修改)</label><input type="password" id="editPassword"></div>
+                <div style="display:flex;gap:10px;">
+                    <button onclick="saveEdit()" class="btn-primary">保存</button>
+                    <button onclick="closeEdit()" style="background:#999;">取消</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="toast"></div>
+        
+        <script>
+            function toast(msg) {
+                const t = document.getElementById('toast');
+                t.textContent = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            }
+            
+            function copy(text) {
+                navigator.clipboard.writeText(text).then(() => toast('已复制: ' + text.substring(0, 20) + '...'));
+            }
+            
+            function copySubOriginal(uuid) {
+                const subUrl = document.getElementById('subUrl').value || window.location.origin;
+                const url = subUrl.includes('://') ? subUrl + '/' + uuid : 'https://' + subUrl + '/' + uuid;
+                copy(url);
+            }
+            
+            function switchTab(section) {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.querySelector('[data-section="' + section + '"]').classList.add('active');
+                document.getElementById('section-' + section).classList.add('active');
+            }
+            
+            function toggleCheckAll() {
+                const checked = document.getElementById('checkAll').checked;
+                document.querySelectorAll('.u-check').forEach(c => c.checked = checked);
+            }
+            
+            function getSelectedUUIDs() {
+                return Array.from(document.querySelectorAll('.u-check:checked')).map(c => c.value);
+            }
+            
+            async function addUser() {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('addName').value);
+                formData.append('expiryDate', document.getElementById('addExpiry').value);
+                formData.append('uuids', document.getElementById('addUUIDs').value);
+                formData.append('frontUsername', document.getElementById('addFrontUsername').value);
+                formData.append('frontPassword', document.getElementById('addFrontPassword').value);
+                
+                const res = await fetch('/api/admin/add', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+                if (res.ok) { toast('添加成功'); location.reload(); }
+                else toast('添加失败');
+            }
+            
+            function openEdit(uuid, name, expiry) {
+                document.getElementById('editUUID').value = uuid;
+                document.getElementById('editName').value = name;
+                document.getElementById('editExpiry').value = expiry;
+                document.getElementById('editPassword').value = '';
+                document.getElementById('editModal').style.display = 'flex';
+            }
+            
+            function closeEdit() {
+                document.getElementById('editModal').style.display = 'none';
+            }
+            
+            async function saveEdit() {
+                const data = {
+                    uuid: document.getElementById('editUUID').value,
+                    name: document.getElementById('editName').value,
+                    expiryDate: document.getElementById('editExpiry').value,
+                    newPassword: document.getElementById('editPassword').value
+                };
+                
+                const res = await fetch('/api/admin/update', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) { toast('保存成功'); location.reload(); }
+                else toast('保存失败');
+            }
+            
+            async function toggleStatus(uuid, enabled) {
+                const res = await fetch('/api/admin/status', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuids: uuid, enabled: enabled.toString() })
+                });
+                if (res.ok) location.reload();
+            }
+            
+            async function delUser(uuid) {
+                if (!confirm('确定删除此用户？')) return;
+                const res = await fetch('/api/admin/delete', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuids: uuid })
+                });
+                if (res.ok) location.reload();
+            }
+            
+            async function batchEnable() {
+                const uuids = getSelectedUUIDs();
+                if (uuids.length === 0) return toast('请选择用户');
+                await fetch('/api/admin/status', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuids: uuids.join(','), enabled: 'true' })
+                });
+                location.reload();
+            }
+            
+            async function batchDisable() {
+                const uuids = getSelectedUUIDs();
+                if (uuids.length === 0) return toast('请选择用户');
+                await fetch('/api/admin/status', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuids: uuids.join(','), enabled: 'false' })
+                });
+                location.reload();
+            }
+            
+            async function batchDelete() {
+                const uuids = getSelectedUUIDs();
+                if (uuids.length === 0) return toast('请选择用户');
+                if (!confirm('确定删除选中的 ' + uuids.length + ' 个用户？')) return;
+                await fetch('/api/admin/delete', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuids: uuids.join(',') })
+                });
+                location.reload();
+            }
+            
+            async function saveSettings() {
+                const data = {
+                    subUrl: document.getElementById('subUrl').value,
+                    websiteUrl: document.getElementById('websiteUrl').value,
+                    proxyIP: document.getElementById('proxyIPInput').value,
+                    bestDomains: document.getElementById('bestDomainsInput').value
+                };
+                
+                const res = await fetch('/api/admin/saveSettings', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) toast('配置已保存');
+                else toast('保存失败');
+            }
+            
+            async function updateSystemSettings() {
+                const data = {
+                    enableRegister: document.getElementById('enableRegisterCheck').checked.toString(),
+                    autoApproveOrder: document.getElementById('autoApproveOrderCheck').checked.toString(),
+                    enableTrial: document.getElementById('enableTrialCheck').checked.toString(),
+                    requireInviteCode: document.getElementById('requireInviteCodeCheck').checked.toString()
+                };
+                
+                await fetch('/api/admin/updateSystemSettings', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                toast('设置已更新');
+            }
+            
+            async function fetchBestIPs(type) {
+                toast('正在获取 ' + type.toUpperCase() + ' 优选IP...');
+                const res = await fetch('/api/admin/fetchBestIPs', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: type })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    const textarea = document.getElementById('bestDomainsInput');
+                    const newIPs = result.data.map(d => d.entry).join('\\n');
+                    textarea.value = textarea.value ? textarea.value + '\\n' + newIPs : newIPs;
+                    toast('获取成功: ' + result.count + ' 条');
+                } else {
+                    toast('获取失败: ' + (result.error || '未知错误'));
+                }
+            }
+            
+            async function adminLogout() {
+                await fetch('/api/admin/logout', { method: 'POST' });
+                location.reload();
+            }
+        </script>
+    </body>
+    </html>
+    `;
+}
+
+module.exports = {
+    renderAdminPanel,
+    renderAdminLoginPage
+};

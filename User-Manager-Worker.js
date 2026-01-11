@@ -2881,6 +2881,15 @@ async function handleAdminPanel(request, env, adminPath) {
           btn.disabled = true;
           
           try {
+            // 先从服务器重新加载最新的配置数据，避免基于过期数据累加
+            const settingsRes = await fetch('/api/users');
+            if (settingsRes.ok) {
+              const settingsData = await settingsRes.json();
+              if (settingsData.settings && settingsData.settings.bestDomains) {
+                bestDomains = settingsData.settings.bestDomains;
+              }
+            }
+            
             const fd = new FormData();
             fd.append('type', type);
             const res = await fetch('/api/admin/fetchBestIPs', { method: 'POST', body: fd });
@@ -2937,32 +2946,32 @@ async function handleAdminPanel(request, env, adminPath) {
               newDataByLine[lineKey].push(item.entry);
             });
             
-            // 获取所有线路（新的和旧的）
+            // 获取所有需要处理的线路（新的和旧的）
             const allLineKeys = new Set([...Object.keys(newDataByLine), ...Object.keys(oldAutoDomains)]);
             
-            // 每条线路: 新IP优先，没有新IP则保留旧IP
+            // 每条线路: 新IP优先，不足5个则用旧IP补齐（去重）
             allLineKeys.forEach(lineKey => {
               const newIPs = newDataByLine[lineKey] || [];
               const oldIPs = oldAutoDomains[lineKey] || [];
               
               if (newIPs.length > 0) {
-                // 有新IP：新IP优先，严格限制最多5个
-                const merged = [...newIPs.slice(0, 5)]; // 先取新IP，最多5个
+                // 有新IP：新IP优先，最多5个
+                const merged = [...newIPs.slice(0, 5)];
                 
-                // 如果新IP少于5个，用旧IP补齐
+                // 如果新IP少于5个，用旧IP补齐（去重）
                 if (merged.length < 5) {
-                  const need = 5 - merged.length;
-                  oldIPs.slice(0, need).forEach(oldIP => {
+                  for (const oldIP of oldIPs) {
                     if (!merged.includes(oldIP)) {
                       merged.push(oldIP);
+                      if (merged.length >= 5) break; // 达到5个就停止
                     }
-                  });
+                  }
                 }
                 
                 // 最终确保不超过5个
                 newAutoDomains.push(...merged.slice(0, 5));
               } else {
-                // 没有新IP：保留所有旧IP（最多5个）
+                // 没有新IP：保留旧IP（最多5个）
                 newAutoDomains.push(...oldIPs.slice(0, 5));
               }
             });
@@ -2971,7 +2980,20 @@ async function handleAdminPanel(request, env, adminPath) {
             bestDomains = [...manualDomains, ...newAutoDomains];
             
             renderList('BestDomain');
-            toast('\u2705 \u6210\u529f\u83b7\u53d6 ' + result.count + ' \u6761 ' + ipVersion + ' \u4f18\u9009IP\uff0c\u5df2\u66ff\u6362\u65e7\u6570\u636e');
+            
+            // 自动保存到数据库
+            const saveFd = new FormData();
+            saveFd.append('proxyIP', proxyIPs.join('\n'));
+            saveFd.append('bestDomains', bestDomains.join('\n'));
+            saveFd.append('subUrl', document.getElementById('subUrl').value);
+            saveFd.append('websiteUrl', document.getElementById('websiteUrl').value);
+            
+            const saveRes = await fetch('/api/admin/saveSettings', { method: 'POST', body: saveFd });
+            if (saveRes.ok) {
+              toast('\u2705 \u6210\u529f\u83b7\u53d6 ' + result.count + ' \u6761 ' + ipVersion + ' \u4f18\u9009IP\uff0c\u5df2\u66ff\u6362\u5e76\u4fdd\u5b58');
+            } else {
+              toast('\u26a0\ufe0f \u83b7\u53d6\u6210\u529f\u4f46\u4fdd\u5b58\u5931\u8d25\uff0c\u8bf7\u624b\u52a8\u4fdd\u5b58');
+            }
             
           } catch (error) {
             toast('\u274c \u7f51\u7edc\u9519\u8bef: ' + error.message);

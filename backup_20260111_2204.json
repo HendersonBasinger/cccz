@@ -1,0 +1,1341 @@
+{
+  "exportTime": "2026-01-11T14:04:41.530Z",
+  "exportTimeBeijing": "2026-01-11 22:04",
+  "version": "1.0",
+  "data": {
+    "users": [
+      {
+        "uuid": "e5aade72-ff90-463d-8d98-0d9903885f7f",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763725318325,
+        "enabled": 1
+      },
+      {
+        "uuid": "cab438c4-9c5a-43fd-a623-ce81cb93085c",
+        "name": "admin",
+        "expiry": 1892851199999,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "f035a476-8335-4340-883a-ec6f559cda27",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "eca0646c-1cce-4d17-9c6f-2fa03d73bc8a",
+        "name": "未命名",
+        "expiry": 1798847999999,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "2c755277-00b6-46b1-9fe7-a5150635dfe9",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "e03cdc09-00b3-4e31-98ba-8535d39ef696",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "1a4f72cd-12e7-4fa1-861f-8729973f5e0a",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "3c5918df-43f1-42dd-8f13-725f19c35724",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "e99804af-2aa6-41a9-96c9-2a56370f51c0",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "a235c5c7-6223-4d48-a5ba-e141d76f16c1",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "476d7169-b095-47a1-8569-01d1296d6d3e",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "b5f423ab-8e67-450a-8cd8-d2380be038a5",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "ae7f3a21-71a7-479f-98b7-293136dd91c6",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "6762b7d2-7a15-4be9-82dd-363d04130496",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "bb8aebbb-9333-469b-8b15-ffe7bab716ce",
+        "name": "未命名",
+        "expiry": null,
+        "create_at": 1763727506408,
+        "enabled": 1
+      },
+      {
+        "uuid": "81b3366b-3a24-4ebb-ab99-1236532dae77",
+        "name": "管理员",
+        "expiry": 4917606540793,
+        "create_at": 1763920140793,
+        "enabled": 1
+      },
+      {
+        "uuid": "83e44e5c-9ee1-4577-88b1-67bd20dcde23",
+        "name": "666666",
+        "expiry": 1792454399999,
+        "create_at": 1763929030809,
+        "enabled": 1
+      },
+      {
+        "uuid": "d83f8c6e-f0b8-4d25-b3bc-dae0217888f2",
+        "name": "kinghui001",
+        "expiry": 1769608401139,
+        "create_at": 1764078801139,
+        "enabled": 1
+      },
+      {
+        "uuid": "d448e18e-c1d3-4fbc-a905-f3397e69108c",
+        "name": "linuxdo",
+        "expiry": 1765151999999,
+        "create_at": 1764739542072,
+        "enabled": 1
+      },
+      {
+        "uuid": "fbb5c315-5842-41f1-9767-c59381e4c607",
+        "name": "qwer123",
+        "expiry": 1768140831305,
+        "create_at": 1764769762968,
+        "enabled": 1
+      },
+      {
+        "uuid": "f167ecfa-debc-45b0-a857-40468605335c",
+        "name": "hostloc3412",
+        "expiry": 1768715972285,
+        "create_at": 1764827972285,
+        "enabled": 1
+      },
+      {
+        "uuid": "5b4573b2-bab1-4db2-babb-75063eda010f",
+        "name": "unxyang@outlook.com",
+        "expiry": 1768262190485,
+        "create_at": 1764892590485,
+        "enabled": 1
+      },
+      {
+        "uuid": "f0c36f00-583b-430c-aac4-ba773a7e4dab",
+        "name": "Dajiba",
+        "expiry": 1768191219476,
+        "create_at": 1764902722474,
+        "enabled": 1
+      },
+      {
+        "uuid": "fe781149-3963-45c2-b659-d28ccc4ffdfe",
+        "name": "l357540899",
+        "expiry": 1768196172984,
+        "create_at": 1766123365518,
+        "enabled": 1
+      },
+      {
+        "uuid": "5732c128-7d51-458a-979e-33d4a80943cd",
+        "name": "klonok",
+        "expiry": 1767722368779,
+        "create_at": 1767156477710,
+        "enabled": 1
+      },
+      {
+        "uuid": "2babe529-0ffa-4384-b3e6-f5aea4160084",
+        "name": "Zzz",
+        "expiry": 1768207316433,
+        "create_at": 1767513614022,
+        "enabled": 1
+      },
+      {
+        "uuid": "17cf8794-ff34-4f97-b97f-405fd92e721c",
+        "name": "DDRYIXIAN",
+        "expiry": 1767841218722,
+        "create_at": 1767668418722,
+        "enabled": 1
+      },
+      {
+        "uuid": "ae368767-49c7-4fb1-a8ab-c215ef17342c",
+        "name": "csz",
+        "expiry": 1767973568982,
+        "create_at": 1767800768982,
+        "enabled": 1
+      },
+      {
+        "uuid": "0be74669-3af3-4e30-91e9-5663ccd19120",
+        "name": "cfly1",
+        "expiry": 1768142212054,
+        "create_at": 1767969412054,
+        "enabled": 1
+      },
+      {
+        "uuid": "aedaf9be-3800-4f82-9b8d-a29bcd7375ff",
+        "name": "Iri1",
+        "expiry": 1768233488402,
+        "create_at": 1767974288402,
+        "enabled": 1
+      },
+      {
+        "uuid": "54c4b892-d7b0-4107-a7f1-c2208b65a03f",
+        "name": "2904931905",
+        "expiry": 1768243221667,
+        "create_at": 1768070421667,
+        "enabled": 1
+      },
+      {
+        "uuid": "9ae6c769-4006-404f-90e0-4fca15b8fa5b",
+        "name": "ffffff",
+        "expiry": 1768296048904,
+        "create_at": 1768123248904,
+        "enabled": 1
+      }
+    ],
+    "userAccounts": [
+      {
+        "id": 2,
+        "username": "hailizi",
+        "email": "",
+        "uuid": "81b3366b-3a24-4ebb-ab99-1236532dae77",
+        "created_at": 1763920140871,
+        "last_login": 1768052645992
+      },
+      {
+        "id": 3,
+        "username": "666666",
+        "email": "",
+        "uuid": "83e44e5c-9ee1-4577-88b1-67bd20dcde23",
+        "created_at": 1763929031037,
+        "last_login": 1768121264185
+      },
+      {
+        "id": 11,
+        "username": "kinghui001",
+        "email": "",
+        "uuid": "d83f8c6e-f0b8-4d25-b3bc-dae0217888f2",
+        "created_at": 1764078801234,
+        "last_login": 1767756950995
+      },
+      {
+        "id": 25,
+        "username": "qwer123",
+        "email": "",
+        "uuid": "fbb5c315-5842-41f1-9767-c59381e4c607",
+        "created_at": 1764769763240,
+        "last_login": 1768054421506
+      },
+      {
+        "id": 26,
+        "username": "hostloc3412",
+        "email": "",
+        "uuid": "f167ecfa-debc-45b0-a857-40468605335c",
+        "created_at": 1764827972344,
+        "last_login": 1767667703199
+      },
+      {
+        "id": 48,
+        "username": "unxyang@outlook.com",
+        "email": "",
+        "uuid": "5b4573b2-bab1-4db2-babb-75063eda010f",
+        "created_at": 1764892590594,
+        "last_login": 1767947830956
+      },
+      {
+        "id": 62,
+        "username": "Dajiba",
+        "email": "",
+        "uuid": "f0c36f00-583b-430c-aac4-ba773a7e4dab",
+        "created_at": 1764902722693,
+        "last_login": 1767708142947
+      },
+      {
+        "id": 76,
+        "username": "l357540899",
+        "email": "",
+        "uuid": "fe781149-3963-45c2-b659-d28ccc4ffdfe",
+        "created_at": 1766123365628,
+        "last_login": 1768109767864
+      },
+      {
+        "id": 84,
+        "username": "klonok",
+        "email": "",
+        "uuid": "5732c128-7d51-458a-979e-33d4a80943cd",
+        "created_at": 1767156477761,
+        "last_login": 1767628846205
+      },
+      {
+        "id": 86,
+        "username": "Zzz",
+        "email": "",
+        "uuid": "2babe529-0ffa-4384-b3e6-f5aea4160084",
+        "created_at": 1767513614333,
+        "last_login": 1767513985245
+      },
+      {
+        "id": 88,
+        "username": "DDRYIXIAN",
+        "email": "",
+        "uuid": "17cf8794-ff34-4f97-b97f-405fd92e721c",
+        "created_at": 1767668418932,
+        "last_login": 1767668447573
+      },
+      {
+        "id": 89,
+        "username": "csz",
+        "email": "",
+        "uuid": "ae368767-49c7-4fb1-a8ab-c215ef17342c",
+        "created_at": 1767800769053,
+        "last_login": 1767800787622
+      },
+      {
+        "id": 90,
+        "username": "cfly1",
+        "email": "",
+        "uuid": "0be74669-3af3-4e30-91e9-5663ccd19120",
+        "created_at": 1767969412273,
+        "last_login": 1768026421446
+      },
+      {
+        "id": 91,
+        "username": "Iri1",
+        "email": "",
+        "uuid": "aedaf9be-3800-4f82-9b8d-a29bcd7375ff",
+        "created_at": 1767974288617,
+        "last_login": 1767974294926
+      },
+      {
+        "id": 92,
+        "username": "2904931905",
+        "email": "",
+        "uuid": "54c4b892-d7b0-4107-a7f1-c2208b65a03f",
+        "created_at": 1768070421882,
+        "last_login": 1768070438513
+      },
+      {
+        "id": 93,
+        "username": "ffffff",
+        "email": "",
+        "uuid": "9ae6c769-4006-404f-90e0-4fca15b8fa5b",
+        "created_at": 1768123248987,
+        "last_login": 1768124174145
+      }
+    ],
+    "settings": [
+      {
+        "key": "SYSTEM_SETTINGS_V1",
+        "value": "{\"proxyIPs\":[\"sjc.o00o.ooo:443\",\"kr.william.us.ci:443\",\"tw.william.us.ci:443\"],\"bestDomains\":[\"cfly.1412.me:443\",\"cf.twitter.now.cc:443\",\"telecom.twitter.now.cc:443\",\"mobile.twitter.now.cc:443\",\"unicom.twitter.now.cc:443\",\"v6mobile.twitter.now.cc:443\",\"v6telecom.twitter.now.cc:443\",\"104.18.31.27:443#v4移动 LHR\",\"104.18.126.23:443#v4移动 LHR\",\"104.19.237.152:443#v4移动 LHR\",\"172.67.206.200:443#v4移动 LHR\",\"104.18.126.164:443#v4移动 LHR\",\"104.16.126.101:443#v4联通 SJC\",\"104.17.175.79:443#v4联通 SJC\",\"104.18.77.222:443#v4联通 SJC\",\"104.18.223.48:443#v4联通 SJC\",\"104.16.158.138:443#v4联通 SJC\",\"104.18.38.108:443#v4电信 SIN\",\"172.64.155.69:443#v4电信 SIN\",\"172.64.157.180:443#v4电信 SIN\",\"104.18.36.55:443#v4电信 SIN\",\"104.18.44.250:443#v4电信 SIN\",\"[2606:4700:83b0::662:1ab0]:443#v6移动 MAA\",\"[2606:4700:83ba::410b:238]:443#v6移动 MAA\",\"[2606:4700:83b1::32a6:358f]:443#v6移动 MAA\",\"[2606:4700:83b2::42d4:597c]:443#v6移动 MAA\",\"[2606:4700:83b0::4fa4:1c0b]:443#v6移动 MAA\",\"[2606:4700:440d::7916:14d6]:443#v6电信 SIN\",\"[2606:4700:4408::446b:61b5]:443#v6电信 SIN\",\"[2606:4700:54::4724:28ef]:443#v6电信 SIN\",\"[2606:4700:5c::3154:4f85]:443#v6电信 SIN\",\"[2606:4700:440e::7173:6fe6]:443#v6电信 SIN\"],\"subUrl\":\"ccffllyy.1412.me,cfly.de5.net\",\"enableRegister\":true,\"autoApproveOrder\":false,\"autoApproveVersion\":5,\"announcementTitle\":\"系统公告\",\"announcementContent\":\"新用户注册免费试用订阅7天，每日签到可获得1天使用时长奖励\\r\\n代理客户端下载\\r\\nv2rayN(支持Win/ Mac/Linux)下载:https://github.com/2dust/v2rayN/releases\\r\\n\\r\\nClash Verge(支持Win/ Mac/Linux)下载:https://github.com/clash-verge-rev/clash-verge-rev/releases\\r\\n\\r\\nClashMeta(仅支持 Android)下载:https://github.com/MetaCubeX/ClashMetaForAndroid/releases\",\"announcementVersion\":5,\"pendingOrderExpiry\":30,\"paymentOrderExpiry\":15,\"customLink1Name\":\"TG客服\",\"customLink1Url\":\"https://t.me/ikun_cloudbot\",\"customLink2Name\":\"\",\"customLink2Url\":\"\",\"userCheckinRecords\":{\"83e44e5c-9ee1-4577-88b1-67bd20dcde23\":\"2026-01-11\",\"d83f8c6e-f0b8-4d25-b3bc-dae0217888f2\":\"2026-01-07\",\"b5e4e7ca-d9ca-448b-b912-a13ed2106dc2\":\"2025-12-12\",\"6a992f46-2ae2-40bc-8925-5fdd7218b3de\":\"2025-12-03\",\"678c4b1d-4641-4eec-b96d-6352dd3c9cec\":\"2025-12-03\",\"0f652c8f-9aac-46ad-ae1c-417511bf5396\":\"2025-12-07\",\"fb7d1029-078f-402c-ac08-37ac0f8dd774\":\"2025-12-03\",\"1d92af4d-c57a-479b-bef0-2bd548b2479f\":\"2025-12-03\",\"e6677c99-13e3-4788-95a9-1749e847abf0\":\"2025-12-03\",\"a864bfa7-c063-496c-994d-4386e60c6e80\":\"2025-12-03\",\"fbb5c315-5842-41f1-9767-c59381e4c607\":\"2026-01-10\",\"f167ecfa-debc-45b0-a857-40468605335c\":\"2026-01-11\",\"09fd7ac4-2ac7-4f15-ad57-e30f49cde714\":\"2025-12-04\",\"23ea4947-2915-4464-80aa-e292f99d988a\":\"2025-12-04\",\"e0281004-4d28-42b4-87eb-498317246cdc\":\"2025-12-04\",\"1404ebbd-14d4-4493-9c2e-75a9956eef69\":\"2025-12-04\",\"fb1a1ac9-f282-4c65-a68a-b75b77e80278\":\"2025-12-04\",\"08255f85-c629-4544-98b8-83ab4d13abaa\":\"2025-12-05\",\"2655ec6c-b283-41b6-93bc-e2a298211b27\":\"2025-12-04\",\"41c257bd-7337-456d-bc4d-df6d4e1c61f3\":\"2025-12-04\",\"febd80f1-18da-469f-8a75-3a61d47895ce\":\"2025-12-04\",\"2d6cd5a9-297c-4772-a030-cb67d3c702f4\":\"2025-12-04\",\"3f528799-3fc2-4e7b-920a-528153d55c96\":\"2025-12-04\",\"9f8abbf8-e7b2-4ca1-b710-c323720ee9f7\":\"2025-12-04\",\"d04f11d2-fba6-494e-b89e-fbed30df9b96\":\"2025-12-11\",\"9dfccfaf-c6e9-49fd-85ae-d521eba30aa3\":\"2025-12-04\",\"847e6ad4-0298-4dc3-8770-ae2f14915efc\":\"2025-12-04\",\"51f2c1b4-6b71-41ba-be23-860275908602\":\"2025-12-04\",\"8c3dbe13-3854-41bd-bd76-222ea4c16380\":\"2025-12-04\",\"b4cb59b8-1cd0-4374-9dab-df207ab9a35b\":\"2025-12-05\",\"d3d6f81f-d8b0-4bad-a25a-48bc3dc70728\":\"2025-12-05\",\"121e2485-a9b3-44c2-8776-597cf523f126\":\"2025-12-05\",\"5b4573b2-bab1-4db2-babb-75063eda010f\":\"2026-01-11\",\"b8f2ec13-189a-4654-a25b-dd0645122e0b\":\"2025-12-29\",\"e526e4a7-ea9f-4f0a-942c-c782e8736b44\":\"2025-12-05\",\"f641ce00-73a3-47b1-b104-7dd50a1c62bd\":\"2025-12-05\",\"dbbf729c-1474-43e8-9112-91b6a935d02f\":\"2025-12-23\",\"d7ca688c-785d-4489-b508-457cdbbb1d6b\":\"2025-12-05\",\"fe62dda9-38fe-45ca-b397-4bfd710966fe\":\"2025-12-22\",\"60c5438c-8910-40e4-88e6-a6a2da512063\":\"2025-12-05\",\"472127cc-619a-4751-ab2a-a15c911f2bba\":\"2025-12-05\",\"8d23648d-ebe8-40b4-b7fe-3c9dc8c787b4\":\"2025-12-23\",\"b3ec8473-03a5-4afb-8630-6f3ad80779d9\":\"2025-12-17\",\"4c90e0bf-4869-4a36-a926-0f31e9b45e4b\":\"2025-12-05\",\"f2443443-93f5-419d-b726-163e37b28c39\":\"2025-12-16\",\"25147321-9ac1-44d9-9e72-b7df1e296123\":\"2025-12-27\",\"f0c36f00-583b-430c-aac4-ba773a7e4dab\":\"2026-01-11\",\"9764093b-109a-42df-90b0-d2bb422e3d89\":\"2025-12-05\",\"2528687f-8d79-47eb-8b73-628762adf7e1\":\"2025-12-11\",\"b135bef6-8c28-4b2c-867c-04462252dd14\":\"2026-01-07\",\"3ce8cb2f-103e-4130-b547-71fb069e3ac8\":\"2025-12-05\",\"a9b52143-42b3-411d-a510-8b771c8b2def\":\"2026-01-01\",\"c5030a86-a6a0-4733-8ccd-f3d522a4edba\":\"2025-12-05\",\"3cbccdc6-c881-4b87-a598-0ad5c2af0e7a\":\"2025-12-05\",\"93350ac1-d6bd-4afb-b636-dfdbf8ed3528\":\"2025-12-28\",\"f37e2e3c-330e-4695-a8c8-8fe6255288e3\":\"2025-12-11\",\"5d550928-6c0b-47ad-be69-5828e3aae7e0\":\"2025-12-15\",\"f86add4a-a9a3-40d3-b121-6fec28d451a5\":\"2025-12-25\",\"174173b3-75b7-419d-88d1-d0a3323d8587\":\"2025-12-19\",\"fe781149-3963-45c2-b659-d28ccc4ffdfe\":\"2026-01-11\",\"b370475c-7f64-4666-80ce-f6d6ead03cf6\":\"2025-12-29\",\"ab1df209-a27c-443d-9517-b3c1690eb43e\":\"2025-12-24\",\"8b3853f8-28dd-4a14-96c7-880629dc25f4\":\"2026-01-04\",\"791e3d8c-e5a0-419f-a53c-355cb5ff0d36\":\"2025-12-30\",\"78e44b4f-d59a-4584-8e66-66bf3838f81e\":\"2025-12-30\",\"f3baaf5c-a943-4ad2-974d-e40adeef1f16\":\"2025-12-31\",\"5732c128-7d51-458a-979e-33d4a80943cd\":\"2026-01-06\",\"d82ebe21-97dc-403c-b8bc-ed43d1f9754f\":\"2025-12-31\",\"2babe529-0ffa-4384-b3e6-f5aea4160084\":\"2026-01-11\",\"17cf8794-ff34-4f97-b97f-405fd92e721c\":\"2026-01-06\",\"ae368767-49c7-4fb1-a8ab-c215ef17342c\":\"2026-01-07\",\"0be74669-3af3-4e30-91e9-5663ccd19120\":\"2026-01-09\",\"aedaf9be-3800-4f82-9b8d-a29bcd7375ff\":\"2026-01-10\",\"54c4b892-d7b0-4107-a7f1-c2208b65a03f\":\"2026-01-11\",\"9ae6c769-4006-404f-90e0-4fca15b8fa5b\":\"2026-01-11\",\"81b3366b-3a24-4ebb-ab99-1236532dae77\":\"2026-01-11\"},\"subConvertUrl\":\"\",\"subConvertType\":\"subconverter\",\"websiteUrl\":\"cfly.1412.me\",\"siteName\":\"CFly\",\"enableTrial\":true,\"trialDays\":1,\"requireInviteCode\":false,\"enableAutoCleanup\":true,\"autoCleanupDays\":7}"
+      }
+    ],
+    "plans": [],
+    "orders": [
+      {
+        "id": 11,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763956405037,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 12,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763956407744,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 13,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763956878002,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 14,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763957128369,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 15,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763957322701,
+        "paid_at": 1763957347716,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 16,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763957371554,
+        "paid_at": 1763968467626,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 17,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1763968505228,
+        "paid_at": 1763968517569,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 29,
+        "user_id": 11,
+        "plan_id": 2,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1764079694465,
+        "paid_at": 1764136959223,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 33,
+        "user_id": 11,
+        "plan_id": 2,
+        "amount": 0,
+        "status": "rejected",
+        "created_at": 1764160899618,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 37,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764599960192,
+        "paid_at": null,
+        "payment_order_id": "ORDER_37",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 38,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "approved",
+        "created_at": 1764601343157,
+        "paid_at": 1764601422860,
+        "payment_order_id": "ORDER_38",
+        "payment_trade_id": "uqVXOxPNfEudokewd8",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 39,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "approved",
+        "created_at": 1764601565762,
+        "paid_at": 1764603072778,
+        "payment_order_id": "ORDER_39",
+        "payment_trade_id": "oHF4MwySf1vmsfddFm",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 40,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "approved",
+        "created_at": 1764603021058,
+        "paid_at": 1764603132790,
+        "payment_order_id": "ORDER_40",
+        "payment_trade_id": "hOKFljvmo58SQWjiDT",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 41,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604411155,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 42,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604426641,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 43,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604504817,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 44,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604536203,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 45,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604546141,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 46,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604862284,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 47,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604900688,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 48,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604909085,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 49,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604990867,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 50,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764604997028,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 51,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764605101871,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 52,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "rejected",
+        "created_at": 1764605112286,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 53,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "approved",
+        "created_at": 1764605320568,
+        "paid_at": 1764605372754,
+        "payment_order_id": "ORDER_53",
+        "payment_trade_id": "wAnYIy9vA7GRk9mYdM",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 54,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 0.1,
+        "status": "approved",
+        "created_at": 1764607706876,
+        "paid_at": 1764607751398,
+        "payment_order_id": "ORDER_54",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 55,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764610407099,
+        "paid_at": null,
+        "payment_order_id": "ORDER_55",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 56,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764610417658,
+        "paid_at": null,
+        "payment_order_id": "ORDER_56",
+        "payment_trade_id": null,
+        "payment_type": "usdt.solana"
+      },
+      {
+        "id": 57,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764610547252,
+        "paid_at": null,
+        "payment_order_id": "ORDER_57",
+        "payment_trade_id": null,
+        "payment_type": "usdt.trc20"
+      },
+      {
+        "id": 58,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764610556811,
+        "paid_at": null,
+        "payment_order_id": "ORDER_58",
+        "payment_trade_id": null,
+        "payment_type": "usdt.arbitrum"
+      },
+      {
+        "id": 59,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "expired",
+        "created_at": 1764610741630,
+        "paid_at": null,
+        "payment_order_id": "ORDER_59",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 60,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "approved",
+        "created_at": 1764635334884,
+        "paid_at": 1764635369258,
+        "payment_order_id": "ORDER_60",
+        "payment_trade_id": "PJKjd8NzdReMDb2elf",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 61,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "approved",
+        "created_at": 1764635409087,
+        "paid_at": 1764635423254,
+        "payment_order_id": "ORDER_61",
+        "payment_trade_id": "KpTTK2T15af54ETmYf",
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 62,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764635548648,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 63,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764659104401,
+        "paid_at": null,
+        "payment_order_id": "ORDER_63",
+        "payment_trade_id": null,
+        "payment_type": "usdt.arbitrum"
+      },
+      {
+        "id": 64,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 1,
+        "status": "rejected",
+        "created_at": 1764659232310,
+        "paid_at": null,
+        "payment_order_id": "ORDER_64",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 65,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764659388845,
+        "paid_at": null,
+        "payment_order_id": "ORDER_65",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 68,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "approved",
+        "created_at": 1764738227078,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 71,
+        "user_id": 25,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764769808037,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 72,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764789194253,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 73,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764811804455,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 74,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764848296900,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 75,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764848311810,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 76,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764848317005,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 77,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764848350828,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 78,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "approved",
+        "created_at": 1764848363776,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 79,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "rejected",
+        "created_at": 1764848367776,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 80,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "rejected",
+        "created_at": 1764848464897,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 81,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "rejected",
+        "created_at": 1764848467886,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 82,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "rejected",
+        "created_at": 1764848654822,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 83,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1764848659248,
+        "paid_at": null,
+        "payment_order_id": "ORDER_83",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 84,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 2,
+        "status": "expired",
+        "created_at": 1764848707391,
+        "paid_at": null,
+        "payment_order_id": "ORDER_84",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 96,
+        "user_id": 3,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764866962493,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 97,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 2,
+        "status": "expired",
+        "created_at": 1764866970051,
+        "paid_at": null,
+        "payment_order_id": "ORDER_97",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 98,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1764888555398,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 108,
+        "user_id": 3,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765029596306,
+        "paid_at": null,
+        "payment_order_id": "ORDER_108",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 109,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1765037085756,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 111,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765151174625,
+        "paid_at": null,
+        "payment_order_id": "ORDER_111",
+        "payment_trade_id": null,
+        "payment_type": "usdt.solana"
+      },
+      {
+        "id": 112,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765151206199,
+        "paid_at": null,
+        "payment_order_id": "ORDER_112",
+        "payment_trade_id": null,
+        "payment_type": "usdt.arbitrum"
+      },
+      {
+        "id": 113,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765152048368,
+        "paid_at": null,
+        "payment_order_id": "ORDER_113",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 114,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765153824853,
+        "paid_at": null,
+        "payment_order_id": "ORDER_114",
+        "payment_trade_id": null,
+        "payment_type": "usdt.solana"
+      },
+      {
+        "id": 116,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765160901133,
+        "paid_at": null,
+        "payment_order_id": "ORDER_116",
+        "payment_trade_id": null,
+        "payment_type": "usdt.trc20"
+      },
+      {
+        "id": 118,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765254168889,
+        "paid_at": null,
+        "payment_order_id": "ORDER_118",
+        "payment_trade_id": null,
+        "payment_type": "usdt.trc20"
+      },
+      {
+        "id": 119,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1765254225425,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 120,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1765494936318,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 121,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1765494953118,
+        "paid_at": null,
+        "payment_order_id": "ORDER_121",
+        "payment_trade_id": null,
+        "payment_type": "usdt.arbitrum"
+      },
+      {
+        "id": 126,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1766101570294,
+        "paid_at": null,
+        "payment_order_id": "ORDER_126",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 128,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1766191540654,
+        "paid_at": null,
+        "payment_order_id": "ORDER_128",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 129,
+        "user_id": 76,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1766573511846,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 130,
+        "user_id": 11,
+        "plan_id": 6,
+        "amount": 20,
+        "status": "expired",
+        "created_at": 1766746204192,
+        "paid_at": null,
+        "payment_order_id": "ORDER_130",
+        "payment_trade_id": null,
+        "payment_type": "usdt.polygon"
+      },
+      {
+        "id": 131,
+        "user_id": 11,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1766746267446,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 132,
+        "user_id": 84,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1767156716356,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      },
+      {
+        "id": 134,
+        "user_id": 3,
+        "plan_id": 2,
+        "amount": 2,
+        "status": "approved",
+        "created_at": 1767331029222,
+        "paid_at": 1767331260300,
+        "payment_order_id": "ORDER_134",
+        "payment_trade_id": null,
+        "payment_type": "usdt.trc20"
+      },
+      {
+        "id": 136,
+        "user_id": 89,
+        "plan_id": 1,
+        "amount": 0,
+        "status": "expired",
+        "created_at": 1767800846498,
+        "paid_at": null,
+        "payment_order_id": null,
+        "payment_trade_id": null,
+        "payment_type": "manual"
+      }
+    ],
+    "announcements": [
+      {
+        "id": 1,
+        "title": "用户须知",
+        "content": "新用户注册免费试用1天订阅,每日签到可获得1天使用时长奖励！\r\n\r\n代理软件下载\r\nClash Verge(支持Win/Mac/Linux)下载:https://github.com/clash-verge-rev/clash-verge-rev/releases\r\n\r\nv2rayN(支持Win/Mac/Linux)下载:https://github.com/2dust/v2rayN/releases\r\n\r\nClash Meta(仅支持Android)下载:https://github.com/MetaCubeX/ClashMetaForAndroid/releases",
+        "enabled": 1,
+        "created_at": 1763968347870,
+        "updated_at": 1765384013479
+      }
+    ],
+    "inviteCodes": [
+      {
+        "id": 1,
+        "code": "CFly",
+        "max_uses": 100,
+        "used_count": 40,
+        "trial_days": 0,
+        "remark": "linuxdo",
+        "enabled": 1,
+        "created_at": 1764850697961
+      }
+    ],
+    "paymentChannels": [
+      {
+        "id": 3,
+        "name": "USDT-Polygon",
+        "code": "usdt.polygon",
+        "api_url": "https://bepusdt.1412.me",
+        "api_token": "nHWk0rohOkbcrFwlhZQIZRCmJ7eGKxiV5GSHrOosXVnShzPQ",
+        "enabled": 1,
+        "created_at": 1764605090254
+      },
+      {
+        "id": 4,
+        "name": "USDT-TRC20",
+        "code": "usdt.trc20",
+        "api_url": "https://bepusdt.1412.me",
+        "api_token": "nHWk0rohOkbcrFwlhZQIZRCmJ7eGKxiV5GSHrOosXVnShzPQ",
+        "enabled": 1,
+        "created_at": 1764607645357
+      },
+      {
+        "id": 5,
+        "name": "Arbitrum-One",
+        "code": "usdt.arbitrum",
+        "api_url": "https://bepusdt.1412.me",
+        "api_token": "nHWk0rohOkbcrFwlhZQIZRCmJ7eGKxiV5GSHrOosXVnShzPQ",
+        "enabled": 1,
+        "created_at": 1764607667924
+      },
+      {
+        "id": 6,
+        "name": "Solana",
+        "code": "usdt.solana",
+        "api_url": "https://bepusdt.1412.me",
+        "api_token": "nHWk0rohOkbcrFwlhZQIZRCmJ7eGKxiV5GSHrOosXVnShzPQ",
+        "enabled": 1,
+        "created_at": 1764607685483
+      }
+    ]
+  },
+  "summary": {
+    "totalUsers": 32,
+    "totalUserAccounts": 16,
+    "totalPlans": 0,
+    "totalOrders": 75,
+    "totalAnnouncements": 1,
+    "totalInviteCodes": 1,
+    "totalPaymentChannels": 4
+  }
+}

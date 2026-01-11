@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  vles-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vles-manager:latest
+    container_name: vles-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      - ADMIN_PATH=${ADMIN_PATH:-/admin}
+      - DATABASE_PATH=/app/data/vles.db
+      - TZ=Asia/Shanghai
+    volumes:
+      - vles-data:/app/data
+      - type: bind
+        source: ./data
+        target: /app/data
+    networks:
+      - vles-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/api/users', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  vles-data:
+    driver: local
+
+networks:
+  vles-network:
+    driver: bridge
