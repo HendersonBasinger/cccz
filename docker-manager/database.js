@@ -105,6 +105,7 @@ function initDatabase() {
             code TEXT UNIQUE NOT NULL,
             api_url TEXT NOT NULL,
             api_token TEXT NOT NULL,
+            callback_url TEXT,
             enabled INTEGER NOT NULL DEFAULT 1,
             created_at INTEGER NOT NULL
         );
@@ -138,6 +139,16 @@ function initDatabase() {
             console.log('[数据库迁移] 添加 auto_approve_version 字段...');
             db.exec('ALTER TABLE user_accounts ADD COLUMN auto_approve_version INTEGER DEFAULT 0');
             console.log('[数据库迁移] ✅ auto_approve_version 字段添加成功');
+        }
+        
+        // 检查 payment_channels 表是否有 callback_url 字段
+        const paymentChannelsInfo = db.prepare("PRAGMA table_info(payment_channels)").all();
+        const hasCallbackUrl = paymentChannelsInfo.some(col => col.name === 'callback_url');
+        
+        if (!hasCallbackUrl) {
+            console.log('[数据库迁移] 添加 callback_url 字段到 payment_channels 表...');
+            db.exec('ALTER TABLE payment_channels ADD COLUMN callback_url TEXT');
+            console.log('[数据库迁移] ✅ callback_url 字段添加成功');
         }
     } catch (e) {
         console.error('[数据库迁移] 错误:', e.message);
@@ -613,25 +624,25 @@ function getPaymentChannelById(id) {
 }
 
 // 创建支付通道
-function createPaymentChannel(name, code, apiUrl, apiToken) {
+function createPaymentChannel(name, code, apiUrl, apiToken, callbackUrl = null) {
     const stmt = getDb().prepare(
-        "INSERT INTO payment_channels (name, code, api_url, api_token, enabled, created_at) VALUES (?, ?, ?, ?, 1, ?)"
+        "INSERT INTO payment_channels (name, code, api_url, api_token, callback_url, enabled, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)"
     );
-    return stmt.run(name, code, apiUrl, apiToken, Date.now());
+    return stmt.run(name, code, apiUrl, apiToken, callbackUrl, Date.now());
 }
 
 // 更新支付通道
-function updatePaymentChannel(id, name, code, apiUrl, apiToken = null) {
+function updatePaymentChannel(id, name, code, apiUrl, apiToken = null, callbackUrl = null) {
     if (apiToken) {
         const stmt = getDb().prepare(
-            "UPDATE payment_channels SET name = ?, code = ?, api_url = ?, api_token = ? WHERE id = ?"
+            "UPDATE payment_channels SET name = ?, code = ?, api_url = ?, api_token = ?, callback_url = ? WHERE id = ?"
         );
-        return stmt.run(name, code, apiUrl, apiToken, id);
+        return stmt.run(name, code, apiUrl, apiToken, callbackUrl, id);
     } else {
         const stmt = getDb().prepare(
-            "UPDATE payment_channels SET name = ?, code = ?, api_url = ? WHERE id = ?"
+            "UPDATE payment_channels SET name = ?, code = ?, api_url = ?, callback_url = ? WHERE id = ?"
         );
-        return stmt.run(name, code, apiUrl, id);
+        return stmt.run(name, code, apiUrl, callbackUrl, id);
     }
 }
 

@@ -38,8 +38,7 @@ function renderAdminPanel() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CFly Panel - VLES 管理端</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <title>CFly Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
@@ -117,6 +116,56 @@ function renderAdminPanel() {
     .dark .tab-trigger.active {
       background: #09090b;
       color: #fafafa;
+    }
+    /* Shadcn 风格开关 */
+    .switch-shadcn {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+    .switch-shadcn input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-shadcn {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e2e8f0;
+      transition: .4s;
+      border-radius: 20px;
+    }
+    .dark .slider-shadcn {
+      background-color: #1e293b;
+    }
+    .slider-shadcn:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    input:checked + .slider-shadcn {
+      background-color: #0f172a;
+    }
+    .dark input:checked + .slider-shadcn {
+      background-color: #f8fafc;
+    }
+    .dark input:checked + .slider-shadcn:before {
+      background-color: #020817;
+    }
+    input:checked + .slider-shadcn:before {
+      transform: translateX(16px);
     }
   </style>
 </head>
@@ -308,210 +357,191 @@ function renderAdminPanel() {
       <div class="p-8 space-y-8 max-w-7xl mx-auto">
         <!-- 仪表盘部分 -->
         <div id="section-dashboard" class="section-content active">
-          <section>
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold tracking-tight">系统概览</h2>
-              <span class="text-xs text-muted-light dark:text-muted-dark">最后更新: <span id="last-update-time"></span></span>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-muted-light dark:text-muted-dark">总用户数</span>
-                  <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">group</span>
-                </div>
-                <div id="stat-total-users" class="text-3xl font-bold tracking-tight">0</div>
-                <div class="mt-2 text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 font-medium">
-                  <span class="material-symbols-outlined text-xs">trending_up</span>
-                  系统总用户
-                </div>
+          <!-- 统计卡片 - Shadcn 风格 -->
+          <section class="mb-10">
+            <h2 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">系统概览</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 rounded-lg">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">总用户数</p>
+                <p id="stat-total-users" class="text-3xl font-bold mt-2 tracking-tighter">0</p>
               </div>
-              
-              <div class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-muted-light dark:text-muted-dark">活跃用户</span>
-                  <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">bolt</span>
-                </div>
-                <div id="stat-active-users" class="text-3xl font-bold tracking-tight">0</div>
-                <div class="mt-2 text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 font-medium">
-                  <span class="material-symbols-outlined text-xs">trending_up</span>
-                  未过期用户
-                </div>
+              <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 rounded-lg">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">活跃用户</p>
+                <p id="stat-active-users" class="text-3xl font-bold mt-2 tracking-tighter">0</p>
               </div>
-              
-              <div class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-muted-light dark:text-muted-dark">配置节点数</span>
-                  <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">dns</span>
-                </div>
-                <div id="stat-config-nodes" class="text-3xl font-bold tracking-tight">0</div>
-                <div class="mt-2 text-[10px] text-muted-light dark:text-muted-dark font-medium">
-                  正常运行中
-                </div>
+              <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 rounded-lg">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">配置节点数</p>
+                <p id="stat-config-nodes" class="text-3xl font-bold mt-2 tracking-tighter">0</p>
               </div>
-              
-              <div class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-sm font-medium text-muted-light dark:text-muted-dark">已过期用户</span>
-                  <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">event_busy</span>
-                </div>
-                <div id="stat-expired-users" class="text-3xl font-bold tracking-tight">0</div>
-                <div class="mt-2 text-[10px] text-red-600 dark:text-red-400 flex items-center gap-1 font-medium">
-                  <span class="material-symbols-outlined text-xs">warning</span>
-                  需要关注
-                </div>
+              <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-6 rounded-lg">
+                <p class="text-sm font-medium text-slate-500 dark:text-slate-400">已过期用户</p>
+                <p id="stat-expired-users" class="text-3xl font-bold mt-2 tracking-tighter">0</p>
               </div>
             </div>
           </section>
-          
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-              <section class="rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark overflow-hidden">
-                <div class="p-6 border-b border-border-light dark:border-border-dark flex items-center justify-between">
-                  <div>
-                    <h3 class="font-semibold">核心配置</h3>
-                    <p class="text-xs text-muted-light dark:text-muted-dark">调整全局系统参数</p>
-                  </div>
-                  <span class="material-symbols-outlined text-muted-light">settings</span>
-                </div>
-                
-                <div class="p-6 space-y-6">
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <label class="text-sm font-medium block">新用户注册试用</label>
-                      <p class="text-xs text-muted-light dark:text-muted-dark">开启后，新注册用户自动获得免费试用时长</p>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                      <input id="input-enableTrial" class="sr-only peer" type="checkbox"/>
-                      <div class="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                    </label>
-                  </div>
-                  
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                      <label class="text-xs font-semibold text-muted-light uppercase">试用时长 (天)</label>
-                      <select id="input-trialDays" class="w-full h-9 px-3 rounded-md border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-sm focus:ring-1 focus:ring-primary outline-none">
-                        <option value="1">1 天</option>
-                        <option value="3">3 天</option>
-                        <option value="7">7 天</option>
-                      </select>
-                    </div>
-                    
-                    <div class="space-y-2">
-                      <label class="text-xs font-semibold text-muted-light uppercase">注册邀请码</label>
-                      <div class="flex items-center gap-4 mt-3">
-                        <span class="text-xs text-muted-light">强制开启邀请码注册</span>
-                        <input id="input-requireInviteCode" class="rounded border-zinc-300 dark:border-zinc-700 text-primary focus:ring-primary" type="checkbox"/>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="pt-4 border-t border-border-light dark:border-border-dark">
-                    <h4 class="text-xs font-semibold text-muted-light uppercase mb-4 tracking-wider">订单自动过期设置</h4>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-2">
-                        <label class="text-xs font-medium">待审核订单时长</label>
-                        <select id="input-pendingOrderExpiry" class="w-full h-9 px-3 rounded-md border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-sm outline-none">
-                          <option value="15">15 分钟</option>
-                          <option value="30">30 分钟</option>
-                          <option value="60">60 分钟</option>
-                        </select>
-                      </div>
-                      
-                      <div class="space-y-2">
-                        <label class="text-xs font-medium">支付订单时长</label>
-                        <select id="input-paymentOrderExpiry" class="w-full h-9 px-3 rounded-md border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-sm outline-none">
-                          <option value="10">10 分钟</option>
-                          <option value="15">15 分钟</option>
-                          <option value="30">30 分钟</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end">
-                  <button onclick="saveSystemSettings()" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md hover:opacity-90 transition-opacity">
-                    保存配置
-                  </button>
-                </div>
-              </section>
+
+          <!-- 系统设置 - Shadcn 风格 -->
+          <section>
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">系统设置</h2>
+              <button onclick="saveSystemSettings()" class="px-4 py-2 bg-primary text-white dark:bg-slate-100 dark:text-slate-950 text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
+                保存更改
+              </button>
             </div>
-            
-            <div class="space-y-6">
-              <section class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <h3 class="font-semibold mb-4 text-sm flex items-center gap-2">
-                  <span class="material-symbols-outlined text-sm">bolt</span>
-                  快速操作
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                  <button onclick="switchSection('proxy-ips')" class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-zinc-800 transition-colors">
-                    <span class="material-symbols-outlined text-xs">public</span>
-                    反代 IP
-                  </button>
-                  <button onclick="switchSection('best-domains')" class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-zinc-800 transition-colors">
-                    <span class="material-symbols-outlined text-xs">star</span>
-                    优选域名
-                  </button>
-                  <button onclick="switchSection('users')" class="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-medium rounded-md hover:bg-zinc-800 transition-colors">
-                    <span class="material-symbols-outlined text-xs">person_add</span>
-                    用户管理
-                  </button>
-                </div>
-              </section>
+
+            <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
               
-              <section class="p-6 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
-                <h3 class="font-semibold mb-1 text-sm flex items-center gap-2">
-                  <span class="material-symbols-outlined text-sm">database</span>
-                  数据备份
-                </h3>
-                <p class="text-[10px] text-muted-light mb-4">导出或导入所有系统配置与用户数据</p>
-                
-                <div class="space-y-3">
-                  <button onclick="exportData()" class="w-full flex items-center justify-center gap-2 px-3 py-2 border border-border-light dark:border-border-dark rounded-md text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <span class="material-symbols-outlined text-xs">download</span>
-                    导出全部数据 (.JSON)
-                  </button>
-                  <button onclick="importData()" class="w-full flex items-center justify-center gap-2 px-3 py-2 border border-border-light dark:border-border-dark rounded-md text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                    <span class="material-symbols-outlined text-xs">upload_file</span>
-                    导入备份数据
-                  </button>
+              <!-- 新用户注册试用 -->
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-slate-400">card_giftcard</span>
+                      <label class="text-sm font-semibold">新用户注册试用</label>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">开启后，新注册用户自动获得免费试用时长；关闭后新用户需购买套餐才能使用</p>
+                  </div>
+                  <label class="switch-shadcn">
+                    <input id="input-enableTrial" type="checkbox"/>
+                    <span class="slider-shadcn"></span>
+                  </label>
                 </div>
-                
-                <div class="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-md">
-                  <p class="text-[10px] text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
-                    <span class="font-bold">⚠️ 注意:</span> 导入操作会覆盖现有数据，建议操作前先导出备份。
-                  </p>
+                <div class="w-full max-w-xs">
+                  <label class="text-xs text-slate-400 mb-1 block">试用时长 (天)</label>
+                  <select id="input-trialDays" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400 text-sm appearance-none">
+                    <option value="1">1 天</option>
+                    <option value="3">3 天</option>
+                    <option value="7">7 天</option>
+                  </select>
                 </div>
-              </section>
+              </div>
+
+              <!-- 注册需要邀请码 -->
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">vpn_key</span>
+                    <label class="text-sm font-semibold">注册需要邀请码</label>
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">开启后，用户注册时必须填写有效的邀请码；邀请码在"邀请码管理"中生成</p>
+                </div>
+                <label class="switch-shadcn">
+                  <input id="input-requireInviteCode" type="checkbox"/>
+                  <span class="slider-shadcn"></span>
+                </label>
+              </div>
+
+              <!-- 订单过期时间设置 -->
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex flex-col gap-1 mb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">schedule</span>
+                    <label class="text-sm font-semibold">订单过期时间设置</label>
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">设置待审核订单和支付订单的自动过期时间</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                  <div>
+                    <label class="text-xs text-slate-400 mb-1 block">待审核订单过期时间</label>
+                    <select id="input-pendingOrderExpiry" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm">
+                      <option value="15">15分钟</option>
+                      <option value="30">30分钟</option>
+                      <option value="60">60分钟</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-xs text-slate-400 mb-1 block">支付订单过期时间</label>
+                    <select id="input-paymentOrderExpiry" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm">
+                      <option value="10">10分钟</option>
+                      <option value="15">15分钟</option>
+                      <option value="30">30分钟</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 用户前端快捷链接 -->
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex flex-col gap-1 mb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">link</span>
+                    <label class="text-sm font-semibold">用户前端快捷链接</label>
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">配置用户面板右上角显示的快捷链接 (如TG客服、官方群组等)</p>
+                </div>
+                <div class="space-y-4 max-w-4xl">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="text-xs text-slate-400 mb-1 block">链接1 名称</label>
+                      <input id="input-link1-name" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" type="text" placeholder="例如: TG客服"/>
+                    </div>
+                    <div>
+                      <label class="text-xs text-slate-400 mb-1 block">链接1 地址</label>
+                      <input id="input-link1-url" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" type="text" placeholder="https://t.me/xxx"/>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="text-xs text-slate-400 mb-1 block">链接2 名称</label>
+                      <input id="input-link2-name" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" placeholder="例如: 官方群组" type="text"/>
+                    </div>
+                    <div>
+                      <label class="text-xs text-slate-400 mb-1 block">链接2 地址</label>
+                      <input id="input-link2-url" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" placeholder="https://t.me/xxx" type="text"/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 自动清理非活跃用户 -->
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-slate-400">cleaning_services</span>
+                      <label class="text-sm font-semibold">自动清理非活跃用户</label>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">自动删除指定天数内未登录的非活跃用户账号</p>
+                  </div>
+                  <label class="switch-shadcn">
+                    <input id="input-autoCleanupEnabled" type="checkbox"/>
+                    <span class="slider-shadcn"></span>
+                  </label>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-24">
+                    <label class="text-xs text-slate-400 mb-1 block">保留天数</label>
+                    <input id="input-autoCleanupDays" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" type="number" min="7" value="7"/>
+                  </div>
+                  <span class="text-sm text-slate-500 dark:text-slate-400 mt-5">天 (超过此天数未登录的用户将被自动删除)</span>
+                </div>
+              </div>
+
             </div>
-          </div>
-          
-          <section class="rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark overflow-hidden">
-            <div class="p-6 border-b border-border-light dark:border-border-dark flex items-center justify-between">
-              <h3 class="font-semibold">最近注册用户</h3>
-              <button onclick="switchSection('users')" class="text-xs font-medium text-muted-light hover:text-primary transition-colors">查看全部</button>
-            </div>
-            
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm">
-                <thead>
-                  <tr class="bg-zinc-50 dark:bg-zinc-900/50 text-muted-light dark:text-muted-dark font-medium border-b border-border-light dark:border-border-dark">
-                    <th class="px-6 py-3">UID / 账号</th>
-                    <th class="px-6 py-3">注册时间</th>
-                    <th class="px-6 py-3">套餐状态</th>
-                    <th class="px-6 py-3 text-right">操作</th>
-                  </tr>
-                </thead>
-                <tbody id="users-table-body" class="divide-y divide-border-light dark:divide-border-dark">
-                  <tr>
-                    <td colspan="4" class="px-6 py-8 text-center text-muted-light">
-                      加载中...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          </section>
+
+          <!-- 数据备份 -->
+          <section class="mt-10">
+            <h2 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">数据备份</h2>
+            <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-6">
+              <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">导出或导入所有系统配置与用户数据</p>
+              
+              <div class="space-y-3 max-w-md">
+                <button onclick="exportData()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium transition-colors">
+                  <span class="material-symbols-outlined text-base">download</span>
+                  导出全部数据 (.JSON)
+                </button>
+                <button onclick="importData()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-md text-sm font-medium transition-colors">
+                  <span class="material-symbols-outlined text-base">upload_file</span>
+                  导入备份数据
+                </button>
+              </div>
+              
+              <div class="mt-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-md">
+                <p class="text-xs text-amber-700 dark:text-amber-500 leading-relaxed">
+                  <span class="font-bold">⚠️ 注意:</span> 导入操作会覆盖现有数据，建议操作前先导出备份。
+                </p>
+              </div>
             </div>
           </section>
         </div>
@@ -1339,43 +1369,43 @@ function renderAdminPanel() {
             '<td class="p-4 align-middle">' +
               '<input type="checkbox" class="u-check rounded border-slate-300 dark:border-zinc-700 text-primary focus:ring-primary cursor-pointer" value="'+ u.uuid +'" onchange="updateBatchBar()" data-name="'+ (u.name || '') +'"/>' +
             '</td>' +
-            '<td class="p-4 align-middle font-mono text-[13px] text-blue-600 dark:text-blue-400 cursor-pointer hover:underline" onclick="copy(\\'+ u.uuid +'\\')" title="点击复制">'+ u.uuid +'</td>' +
+            '<td class="p-4 align-middle font-mono text-[13px] text-blue-600 dark:text-blue-400 cursor-pointer hover:underline" onclick="copyToClipboard(\\'' + u.uuid + '\\')" title="点击复制">'+ u.uuid +'</td>' +
             '<td class="p-4 align-middle">'+ (u.name || '-') +'</td>' +
             '<td class="p-4 align-middle text-muted-light">'+ createTime +'</td>' +
             '<td class="p-4 align-middle text-muted-light">'+ expiryTime +'</td>' +
             '<td class="p-4 align-middle">'+ statusBadge +'</td>' +
             '<td class="p-4 align-middle text-right">' +
               '<div class="relative inline-block">' +
-                '<button id="menu-btn-' + u.uuid + '" onclick="toggleUserMenu(\\'+ u.uuid +'\\')" class="user-menu-btn h-8 w-8 inline-flex items-center justify-center rounded-md border border-border-light dark:border-border-dark hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">' +
+                '<button id="menu-btn-' + u.uuid + '" onclick="toggleUserMenu(\\'' + u.uuid + '\\')" class="user-menu-btn h-8 w-8 inline-flex items-center justify-center rounded-md border border-border-light dark:border-border-dark hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors">' +
                   '<span class="material-symbols-outlined text-sm">more_horiz</span>' +
                 '</button>' +
                 '<div id="menu-'+ u.uuid +'" class="user-menu hidden absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-border-light dark:border-border-dark rounded-md shadow-lg z-50">' +
                   '<div class="py-1">' +
-                    '<button onclick="showSubLinkModal(\\'+ u.uuid +'\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                    '<button onclick="showSubLinkModal(\\'' + u.uuid + '\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                       '<span class="material-symbols-outlined text-sm">link</span>订阅链接' +
                     '</button>' +
-                    '<button onclick="openEditUser(\\'+ u.uuid +'\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                    '<button onclick="openEditUser(\\'' + u.uuid + '\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                       '<span class="material-symbols-outlined text-sm">edit</span>编辑' +
                     '</button>' +
                     (isEnabled && !isExpired ? 
-                      '<button onclick="toggleUserStatus(\\'+ u.uuid +'\\',false)" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                      '<button onclick="toggleUserStatus(\\'' + u.uuid + '\\',false)" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                         '<span class="material-symbols-outlined text-sm">block</span>禁用' +
                       '</button>' :
                       (!isEnabled && !isExpired ? 
-                        '<button onclick="toggleUserStatus(\\'+ u.uuid +'\\',true)" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                        '<button onclick="toggleUserStatus(\\'' + u.uuid + '\\',true)" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                           '<span class="material-symbols-outlined text-sm">check_circle</span>启用' +
                         '</button>' : '')
                     ) +
                     (!isExpired ? 
-                      '<button onclick="openRenewUser(\\'+ u.uuid +'\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                      '<button onclick="openRenewUser(\\'' + u.uuid + '\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                         '<span class="material-symbols-outlined text-sm">schedule</span>续期' +
                       '</button>' : ''
                     ) +
-                    '<button onclick="confirmResetUUID(\\'+ u.uuid +'\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
+                    '<button onclick="confirmResetUUID(\\'' + u.uuid + '\\')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-2">' +
                       '<span class="material-symbols-outlined text-sm">refresh</span>重置UUID' +
                     '</button>' +
                     '<div class="border-t border-border-light dark:border-border-dark"></div>' +
-                    '<button onclick="deleteUser(\\'+ u.uuid +'\\')" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-2">' +
+                    '<button onclick="deleteUser(\\'' + u.uuid + '\\')" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-2">' +
                       '<span class="material-symbols-outlined text-sm">delete</span>删除' +
                     '</button>' +
                   '</div>' +
@@ -1528,7 +1558,7 @@ function renderAdminPanel() {
     
     // 确认重置UUID
     async function confirmResetUUID(uuid) {
-      const confirmed = await showConfirm('确定要重置该用户的 UUID 吗？\n\n⚠️ 此操作将导致用户需要重新配置客户端！', '重置UUID');
+      const confirmed = await showConfirm('确定要重置该用户的 UUID 吗？\\n\\n⚠️ 此操作将导致用户需要重新配置客户端！', '重置UUID');
       if (!confirmed) return;
       await resetUserUUID(uuid);
     }
@@ -1566,7 +1596,7 @@ function renderAdminPanel() {
         '</div>' +
         '<div class=\"flex justify-end gap-2 mt-6\">' +
           '<button onclick=\"closeModal()\" class=\"px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900\">取消</button>' +
-          "<button onclick=\"submitEditUser('" + uuid + "')\" class=\"px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:opacity-90\">保存修改</button>" +
+          '<button onclick=\"submitEditUser(\\'+ uuid +\\')\" class=\"px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:opacity-90\">保存修改</button>' +
         '</div>';
         openModal('编辑用户', bodyHtml);
       } catch (error) {
@@ -1603,7 +1633,7 @@ function renderAdminPanel() {
     }
     
     async function resetUserUUID(uuid) {
-      const confirmed = await showConfirm('确定要重置该用户的 UUID 吗？\n\n⚠️ 此操作将导致用户需要重新配置客户端！', '重置UUID');
+      const confirmed = await showConfirm('确定要重置该用户的 UUID 吗？\\n\\n⚠️ 此操作将导致用户需要重新配置客户端！', '重置UUID');
       if (!confirmed) return;
       
       try {
@@ -1616,7 +1646,7 @@ function renderAdminPanel() {
         const result = await response.json();
         
         if (result.success) {
-          showAlert('UUID 已重置\n\n新 UUID: ' + result.newUuid, 'success');
+          showAlert('UUID 已重置\\n\\n新 UUID: ' + result.newUuid, 'success');
           loadAllUsers();
         } else {
           showAlert('重置失败: ' + (result.error || '未知错误'), 'error');
@@ -1706,7 +1736,7 @@ function renderAdminPanel() {
       const checked = Array.from(document.querySelectorAll('.u-check:checked'));
       if (checked.length === 0) return;
       
-      const confirmed = await showConfirm('确定要删除选中的 ' + checked.length + ' 个用户吗？\n\n⚠️ 此操作不可恢复！', '批量删除');
+      const confirmed = await showConfirm('确定要删除选中的 ' + checked.length + ' 个用户吗？\\n\\n⚠️ 此操作不可恢复！', '批量删除');
       if (!confirmed) return;
       
       try {
@@ -2018,7 +2048,7 @@ function renderAdminPanel() {
     }
     
     async function deleteUser(uuid) {
-      const confirmed = await showConfirm('确定要删除该用户吗？\n\n⚠️ 此操作不可恢复！', '删除用户');
+      const confirmed = await showConfirm('确定要删除该用户吗？\\n\\n⚠️ 此操作不可恢复！', '删除用户');
       if (!confirmed) return;
       
       try {
@@ -2154,7 +2184,7 @@ function renderAdminPanel() {
         const proxyResult = await proxyResponse.json();
         
         if (proxyResult.success) {
-          showAlert('保存成功\n\n' + 
+          showAlert('保存成功\\n\\n' + 
             '订阅地址: ' + (subUrl || '未设置') + '\\n' +
             '官网地址: ' + (websiteUrl || '未设置') + '\\n' +
             '反代 IP: ' + currentProxyIPs.length + ' 个', 'success');
@@ -2407,7 +2437,7 @@ function renderAdminPanel() {
       if (!plan) return;
       
       const confirmed = await showConfirm(
-        '确定要删除套餐 "' + plan.name + '" 吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要删除套餐 "' + plan.name + '" 吗？\\n\\n⚠️ 此操作不可恢复！',
         '删除套餐'
       );
       
@@ -2569,7 +2599,7 @@ function renderAdminPanel() {
       if (!order) return;
       
       const confirmed = await showConfirm(
-        '确定要通过订单 #' + orderId + ' 吗？\n\n用户: ' + (order.username || order.uuid.substring(0, 13)) + '\n套餐: ' + order.plan_name + ' (' + order.duration_days + '天)\n金额: ¥' + order.price,
+        '确定要通过订单 #' + orderId + ' 吗？\\n\\n用户: ' + (order.username || order.uuid.substring(0, 13)) + '\\n套餐: ' + order.plan_name + ' (' + order.duration_days + '天)\\n金额: ¥' + order.price,
         '通过订单'
       );
       
@@ -2600,7 +2630,7 @@ function renderAdminPanel() {
       if (!order) return;
       
       const confirmed = await showConfirm(
-        '确定要拒绝订单 #' + orderId + ' 吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要拒绝订单 #' + orderId + ' 吗？\\n\\n⚠️ 此操作不可恢复！',
         '拒绝订单'
       );
       
@@ -2676,7 +2706,7 @@ function renderAdminPanel() {
       }
       
       const confirmed = await showConfirm(
-        '确定要批量拒绝选中的 ' + checked.length + ' 个订单吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要批量拒绝选中的 ' + checked.length + ' 个订单吗？\\n\\n⚠️ 此操作不可恢复！',
         '批量拒绝'
       );
       
@@ -3040,7 +3070,7 @@ function renderAdminPanel() {
       if (!announcement) return;
       
       const confirmed = await showConfirm(
-        '确定要删除公告 "' + announcement.title + '" 吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要删除公告 "' + announcement.title + '" 吗？\\n\\n⚠️ 此操作不可恢复！',
         '删除公告'
       );
       
@@ -3071,7 +3101,7 @@ function renderAdminPanel() {
     
     async function loadAllPaymentChannels() {
       try {
-        const response = await fetch('/api/admin/payment-channels');
+        const response = await fetch('/api/admin/payment/channels');
         if (!response.ok) throw new Error('Failed to fetch payment channels');
         
         const data = await response.json();
@@ -3163,36 +3193,48 @@ function renderAdminPanel() {
       container.innerHTML = html;
     }
     
-    function openAddPaymentChannelModal() {
-      const bodyHtml = '<div class="space-y-5">' +
-        '<div class="space-y-2">' +
+    async function openAddPaymentChannelModal() {
+      // 获取系统设置中的baseUrl
+      let defaultBaseUrl = '';
+      try {
+        const response = await fetch('/api/admin/getSystemSettings');
+        if (response.ok) {
+          const data = await response.json();
+          defaultBaseUrl = data.settings?.baseUrl || '';
+        }
+      } catch (e) {
+        console.error('获取系统设置失败:', e);
+      }
+      
+      const bodyHtml = '<div class="space-y-4">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">通道名称</label>' +
-          '<input id="add-channel-name" type="text" placeholder="例如: USDT-TRC20" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="add-channel-name" type="text" placeholder="例如: USDT-TRC20" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">通道代码</label>' +
-          '<input id="add-channel-code" type="text" placeholder="例如: usdt.trc20" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="add-channel-code" type="text" placeholder="例如: usdt.trc20" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">API 地址</label>' +
-          '<input id="add-channel-api-url" type="url" placeholder="https://epusdt.example.com" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="add-channel-api-url" type="url" placeholder="https://epusdt.example.com" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">API Token</label>' +
-          '<div class="relative">' +
-            '<input id="add-channel-api-token" type="password" placeholder="BEpusdt API 认证令牌" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 pr-10 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
-            '<button type="button" onclick="togglePasswordVisibility(&quot;add-channel-api-token&quot;)" class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">' +
-              '<span class="material-symbols-outlined text-lg">visibility</span>' +
-            '</button>' +
-          '</div>' +
+          '<input id="add-channel-api-token" type="text" placeholder="BEpusdt API 认证令牌" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50 font-mono"/>' +
+        '</div>' +
+        '<div class="space-y-1.5">' +
+          '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">网站基础URL <span class="text-xs text-zinc-500">(用于支付回调)</span></label>' +
+          '<input id="add-channel-callback-url" type="url" value="' + (defaultBaseUrl || '').replace(/"/g, '&quot;') + '" placeholder="https://yourdomain.com" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">支付回调地址: <code class="bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 rounded">[此URL]/api/payment/notify</code></p>' +
         '</div>' +
       '</div>' +
-      '<div class="flex items-center justify-end space-x-2 mt-6">' +
-        '<button onclick="closeModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 px-4 py-2 text-zinc-950 dark:text-zinc-50 transition-colors">取消</button>' +
-        '<button onclick="saveNewPaymentChannel()" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-white dark:bg-zinc-50 dark:text-zinc-950 hover:opacity-90 h-10 px-4 py-2 shadow transition-opacity">保存</button>' +
+      '<div class="flex items-center justify-end space-x-2 mt-5">' +
+        '<button onclick="closeModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 px-4 py-2 text-zinc-950 dark:text-zinc-50 transition-colors">取消</button>' +
+        '<button onclick="saveNewPaymentChannel()" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-white dark:bg-zinc-50 dark:text-zinc-950 hover:opacity-90 h-9 px-4 py-2 shadow transition-opacity">保存</button>' +
       '</div>';
       
-      openModal('添加支付渠道', bodyHtml);
+      openModal('添加支付渠道', bodyHtml, 'max-w-lg');
     }
     
     function togglePasswordVisibility(inputId) {
@@ -3209,6 +3251,7 @@ function renderAdminPanel() {
       const code = document.getElementById('add-channel-code').value.trim();
       const apiUrl = document.getElementById('add-channel-api-url').value.trim();
       const apiToken = document.getElementById('add-channel-api-token').value.trim();
+      const callbackUrl = document.getElementById('add-channel-callback-url').value.trim();
       
       if (!name) {
         showAlert('请输入通道名称', 'warning');
@@ -3231,14 +3274,15 @@ function renderAdminPanel() {
       }
       
       try {
-        const response = await fetch('/api/admin/payment-channels/save', {
+        const response = await fetch('/api/admin/payment/channels/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name,
             code,
             api_url: apiUrl,
-            api_token: apiToken
+            api_token: apiToken,
+            callback_url: callbackUrl
           })
         });
         
@@ -3260,36 +3304,36 @@ function renderAdminPanel() {
       const channel = allPaymentChannels.find(c => c.id === channelId);
       if (!channel) return;
       
-      const bodyHtml = '<div class="space-y-5">' +
+      const bodyHtml = '<div class="space-y-4">' +
         '<input type="hidden" id="edit-channel-id" value="' + channelId + '">' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">通道名称</label>' +
-          '<input id="edit-channel-name" type="text" value="' + (channel.name || '').replace(/"/g, '&quot;') + '" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="edit-channel-name" type="text" value="' + (channel.name || '').replace(/"/g, '&quot;') + '" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">通道代码</label>' +
-          '<input id="edit-channel-code" type="text" value="' + (channel.code || '').replace(/"/g, '&quot;') + '" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="edit-channel-code" type="text" value="' + (channel.code || '').replace(/"/g, '&quot;') + '" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">API 地址</label>' +
-          '<input id="edit-channel-api-url" type="url" value="' + (channel.api_url || '').replace(/"/g, '&quot;') + '" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<input id="edit-channel-api-url" type="url" value="' + (channel.api_url || '').replace(/"/g, '&quot;') + '" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
         '</div>' +
-        '<div class="space-y-2">' +
+        '<div class="space-y-1.5">' +
           '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">API Token <span class="text-xs text-zinc-500">(留空不修改)</span></label>' +
-          '<div class="relative">' +
-            '<input id="edit-channel-api-token" type="password" placeholder="留空则不修改" class="flex h-10 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 pr-10 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
-            '<button type="button" onclick="togglePasswordVisibility(&quot;edit-channel-api-token&quot;)" class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">' +
-              '<span class="material-symbols-outlined text-lg">visibility</span>' +
-            '</button>' +
-          '</div>' +
+          '<input id="edit-channel-api-token" type="text" value="' + (channel.api_token || '').replace(/"/g, '&quot;') + '" placeholder="留空则不修改" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50 font-mono"/>' +
+        '</div>' +
+        '<div class="space-y-1.5">' +
+          '<label class="text-sm font-medium text-zinc-950 dark:text-zinc-50">网站基础URL <span class="text-xs text-zinc-500">(用于支付回调)</span></label>' +
+          '<input id="edit-channel-callback-url" type="url" value="' + (channel.callback_url || '').replace(/"/g, '&quot;') + '" placeholder="https://yourdomain.com" class="flex h-9 w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-300 dark:text-zinc-50"/>' +
+          '<p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">支付回调地址: <code class="bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 rounded">[此URL]/api/payment/notify</code></p>' +
         '</div>' +
       '</div>' +
-      '<div class="flex items-center justify-end space-x-2 mt-6">' +
-        '<button onclick="closeModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 h-10 px-4 py-2 text-zinc-950 dark:text-zinc-50 transition-colors">取消</button>' +
-        '<button onclick="savePaymentChannelEdit()" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-white dark:bg-zinc-50 dark:text-zinc-950 hover:opacity-90 h-10 px-4 py-2 shadow transition-opacity">保存更改</button>' +
+      '<div class="flex items-center justify-end space-x-2 mt-5">' +
+        '<button onclick="closeModal()" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800 h-9 px-4 py-2 text-zinc-950 dark:text-zinc-50 transition-colors">取消</button>' +
+        '<button onclick="savePaymentChannelEdit()" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-white dark:bg-zinc-50 dark:text-zinc-950 hover:opacity-90 h-9 px-4 py-2 shadow transition-opacity">保存更改</button>' +
       '</div>';
       
-      openModal('编辑支付渠道', bodyHtml);
+      openModal('编辑支付渠道', bodyHtml, 'max-w-lg');
     }
     
     async function savePaymentChannelEdit() {
@@ -3298,6 +3342,7 @@ function renderAdminPanel() {
       const code = document.getElementById('edit-channel-code').value.trim();
       const apiUrl = document.getElementById('edit-channel-api-url').value.trim();
       const apiToken = document.getElementById('edit-channel-api-token').value.trim();
+      const callbackUrl = document.getElementById('edit-channel-callback-url').value.trim();
       
       if (!name || !code || !apiUrl) {
         showAlert('通道名称、代码和API地址不能为空', 'warning');
@@ -3305,7 +3350,7 @@ function renderAdminPanel() {
       }
       
       try {
-        const response = await fetch('/api/admin/payment-channels/update', {
+        const response = await fetch('/api/admin/payment/channels/update', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -3313,7 +3358,8 @@ function renderAdminPanel() {
             name,
             code,
             api_url: apiUrl,
-            api_token: apiToken || undefined
+            api_token: apiToken || undefined,
+            callback_url: callbackUrl
           })
         });
         
@@ -3333,7 +3379,7 @@ function renderAdminPanel() {
     
     async function togglePaymentChannelStatus(channelId) {
       try {
-        const response = await fetch('/api/admin/payment-channels/toggle', {
+        const response = await fetch('/api/admin/payment/channels/toggle', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: channelId })
@@ -3357,14 +3403,14 @@ function renderAdminPanel() {
       if (!channel) return;
       
       const confirmed = await showConfirm(
-        '确定要删除支付渠道 "' + channel.name + '" 吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要删除支付渠道 "' + channel.name + '" 吗？\\n\\n⚠️ 此操作不可恢复！',
         '删除支付渠道'
       );
       
       if (!confirmed) return;
       
       try {
-        const response = await fetch('/api/admin/payment-channels/delete', {
+        const response = await fetch('/api/admin/payment/channels/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: channelId })
@@ -3624,7 +3670,7 @@ function renderAdminPanel() {
       if (!invite) return;
       
       const confirmed = await showConfirm(
-        '确定要删除邀请码 "' + invite.code + '" 吗？\n\n⚠️ 此操作不可恢复！',
+        '确定要删除邀请码 "' + invite.code + '" 吗？\\n\\n⚠️ 此操作不可恢复！',
         '删除邀请码'
       );
       
@@ -3772,7 +3818,7 @@ function renderAdminPanel() {
     }
     
     async function clearAllBestDomains() {
-      const confirmed = await showConfirm('确定要清空所有优选域名吗？\n\n⚠️ 此操作不可恢复！', '清空列表');
+      const confirmed = await showConfirm('确定要清空所有优选域名吗？\\n\\n⚠️ 此操作不可恢复！', '清空列表');
       if (!confirmed) return;
       currentBestDomains = [];
       renderBestDomainsList();
@@ -3780,7 +3826,7 @@ function renderAdminPanel() {
     }
     
     async function fetchIPv4BestDomains() {
-      const confirmed = await showConfirm('确定要从远程获取 IPv4 优选域名吗？\n\n⚠️ 这将替换当前列表！', '获取IPv4优选');
+      const confirmed = await showConfirm('确定要从远程获取 IPv4 优选域名吗？\\n\\n⚠️ 这将替换当前列表！', '获取IPv4优选');
       if (!confirmed) return;
       
       try {
@@ -3805,7 +3851,7 @@ function renderAdminPanel() {
     }
     
     async function fetchIPv6BestDomains() {
-      const confirmed = await showConfirm('确定要从远程获取 IPv6 优选域名吗？\n\n⚠️ 这将替换当前列表！', '获取IPv6优选');
+      const confirmed = await showConfirm('确定要从远程获取 IPv6 优选域名吗？\\n\\n⚠️ 这将替换当前列表！', '获取IPv6优选');
       if (!confirmed) return;
       
       try {
@@ -3837,7 +3883,7 @@ function renderAdminPanel() {
         const result = await response.json();
         
         if (result.success) {
-          showAlert('保存成功\n\n共配置 ' + currentBestDomains.length + ' 个优选域名', 'success');
+          showAlert('保存成功\\n\\n共配置 ' + currentBestDomains.length + ' 个优选域名', 'success');
         } else {
           showAlert('保存失败: ' + (result.error || '未知错误'), 'error');
         }
@@ -4098,6 +4144,26 @@ function renderAdminPanel() {
           document.getElementById('input-requireInviteCode').checked = settings.requireInviteCode || false;
           document.getElementById('input-pendingOrderExpiry').value = settings.pendingOrderExpiry || 30;
           document.getElementById('input-paymentOrderExpiry').value = settings.paymentOrderExpiry || 15;
+          
+          // 加载快捷链接配置
+          if (settings.link1Name) document.getElementById('input-link1-name').value = settings.link1Name;
+          if (settings.link1Url) document.getElementById('input-link1-url').value = settings.link1Url;
+          if (settings.link2Name) document.getElementById('input-link2-name').value = settings.link2Name;
+          if (settings.link2Url) document.getElementById('input-link2-url').value = settings.link2Url;
+          
+          // 加载自动清理配置
+          if (document.getElementById('input-autoCleanupEnabled')) {
+            document.getElementById('input-autoCleanupEnabled').checked = settings.autoCleanupEnabled || false;
+          }
+          if (document.getElementById('input-autoCleanupDays')) {
+            document.getElementById('input-autoCleanupDays').value = settings.autoCleanupDays || 7;
+          }
+          
+          // 加载仪表盘快捷操作开关
+          const toggleRequireInvite = document.getElementById('toggle-require-invite');
+          if (toggleRequireInvite) {
+            toggleRequireInvite.checked = settings.requireInviteCode || false;
+          }
         }
       } catch (error) {
         console.error('加载系统配置失败:', error);
@@ -4115,6 +4181,24 @@ function renderAdminPanel() {
           paymentOrderExpiry: parseInt(document.getElementById('input-paymentOrderExpiry').value)
         };
         
+        // 添加快捷链接配置
+        const link1Name = document.getElementById('input-link1-name');
+        const link1Url = document.getElementById('input-link1-url');
+        const link2Name = document.getElementById('input-link2-name');
+        const link2Url = document.getElementById('input-link2-url');
+        
+        if (link1Name) settings.link1Name = link1Name.value.trim();
+        if (link1Url) settings.link1Url = link1Url.value.trim();
+        if (link2Name) settings.link2Name = link2Name.value.trim();
+        if (link2Url) settings.link2Url = link2Url.value.trim();
+        
+        // 添加自动清理配置
+        const autoCleanupEnabled = document.getElementById('input-autoCleanupEnabled');
+        const autoCleanupDays = document.getElementById('input-autoCleanupDays');
+        
+        if (autoCleanupEnabled) settings.autoCleanupEnabled = autoCleanupEnabled.checked;
+        if (autoCleanupDays) settings.autoCleanupDays = parseInt(autoCleanupDays.value);
+        
         const response = await fetch('/api/admin/updateSystemSettings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -4124,86 +4208,13 @@ function renderAdminPanel() {
         const result = await response.json();
         
         if (result.success) {
-          showAlert('保存成功', 'success');
+          showAlert('✅ 保存成功', 'success');
         } else {
-          showAlert('保存失败: ' + (result.error || '未知错误'), 'error');
+          showAlert('❌ 保存失败: ' + (result.error || '未知错误'), 'error');
         }
       } catch (error) {
         console.error('保存系统配置失败:', error);
-        showAlert('保存失败: ' + error.message, 'error');
-      }
-    }
-    
-    // 加载最近注册用户
-    async function loadRecentUsers() {
-      try {
-        const accountResponse = await fetch('/api/admin/users');
-        if (!accountResponse.ok) throw new Error('Failed to fetch user accounts');
-        
-        const result = await accountResponse.json();
-        const accounts = result.users || [];
-        const recentAccounts = accounts.slice(0, 5);
-        const tbody = document.getElementById('users-table-body');
-        tbody.innerHTML = '';
-        
-        for (const account of recentAccounts) {
-          const detailResponse = await fetch('/api/admin/user/' + account.uuid);
-          if (!detailResponse.ok) continue;
-          
-          const userDetail = await detailResponse.json();
-          
-          let statusClass = '';
-          let statusText = '';
-          
-          if (!userDetail.enabled) {
-            statusClass = 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-            statusText = '已禁用';
-          } else if (userDetail.expiry && userDetail.expiry < Date.now()) {
-            statusClass = 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-            statusText = '已过期';
-          } else {
-            statusClass = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-            statusText = '正常';
-          }
-          
-          const registerTime = userDetail.registeredAt 
-            ? new Date(userDetail.registeredAt).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit'
-              }).replace(/\\//g, '-')
-            : '未知';
-          
-          const shortUuid = account.uuid.substring(0, 13) + '...';
-          
-          const row = '<tr>' +
-            '<td class="px-6 py-4">' +
-              '<div class="font-medium">' + shortUuid + '</div>' +
-              '<div class="text-[10px] text-muted-light">' + (account.account || '无账号') + '</div>' +
-            '</td>' +
-            '<td class="px-6 py-4 text-muted-light">' + registerTime + '</td>' +
-            '<td class="px-6 py-4">' +
-              '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ' + statusClass + '">' +
-                statusText +
-              '</span>' +
-            '</td>' +
-            '<td class="px-6 py-4 text-right">' +
-              '<button class="text-primary dark:text-white hover:underline text-xs font-medium" onclick="switchSection(\'users\')">编辑</button>' +
-            '</td>' +
-          '</tr>';
-          
-          tbody.innerHTML += row;
-        }
-        
-        if (recentAccounts.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-muted-light">暂无注册用户</td></tr>';
-        }
-      } catch (error) {
-        console.error('加载最近注册用户失败:', error);
-        const tbody = document.getElementById('users-table-body');
-        tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-red-600">加载用户数据失败: ' + error.message + '</td></tr>';
+        showAlert('❌ 保存失败: ' + error.message, 'error');
       }
     }
     
@@ -4278,12 +4289,188 @@ function renderAdminPanel() {
       if (elem) elem.textContent = timeStr;
     }
     
+    // 切换注册需要邀请码
+    async function toggleRequireInvite() {
+      try {
+        const checked = document.getElementById('toggle-require-invite').checked;
+        const response = await fetch('/api/admin/updateSystemSettings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requireInviteCode: checked })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          showToast(checked ? '✅ 已启用邀请码注册' : '✅ 已关闭邀请码注册');
+        } else {
+          throw new Error(result.error || '更新失败');
+        }
+      } catch (error) {
+        alert('❌ ' + error.message);
+        // 恢复开关状态
+        document.getElementById('toggle-require-invite').checked = !document.getElementById('toggle-require-invite').checked;
+      }
+    }
+    
+    // 打开用户前端链接设置模态框
+    function openUserFrontendUrlModal() {
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = 
+        '<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 transition-opacity">' +
+          '<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full transform transition-all">' +
+            '<div class="p-6 border-b border-border-light dark:border-border-dark">' +
+              '<h3 class="text-lg font-semibold">🔗 用户前端快捷链接</h3>' +
+            '</div>' +
+            '<div class="p-6 space-y-4">' +
+              '<div>' +
+                '<label class="text-sm font-medium mb-2 block">用户前端访问地址</label>' +
+                '<input type="text" id="input-user-frontend-url" placeholder="https://your-domain.com" class="w-full px-3 py-2 border border-border-light dark:border-border-dark rounded-md bg-background-light dark:bg-background-dark text-sm">' +
+                '<p class="text-xs text-muted-light mt-1">设置后，用户可通过此链接访问前端面板</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="p-6 border-t border-border-light dark:border-border-dark flex justify-end gap-3">' +
+              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">取消</button>' +
+              '<button onclick="saveUserFrontendUrl()" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-zinc-800">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      modal.classList.add('modal-show');
+      
+      // 加载当前配置
+      fetch('/api/admin/getSystemSettings')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.settings && data.settings.userFrontendUrl) {
+            document.getElementById('input-user-frontend-url').value = data.settings.userFrontendUrl;
+          }
+        })
+        .catch(err => console.error('加载配置失败:', err));
+    }
+    
+    // 保存用户前端链接
+    async function saveUserFrontendUrl() {
+      try {
+        const url = document.getElementById('input-user-frontend-url').value.trim();
+        
+        if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+          alert('❌ 请输入有效的URL（需要包含 http:// 或 https://）');
+          return;
+        }
+        
+        const response = await fetch('/api/admin/updateSystemSettings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userFrontendUrl: url })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          showToast('✅ 用户前端链接已保存');
+          closeModal();
+        } else {
+          throw new Error(result.error || '保存失败');
+        }
+      } catch (error) {
+        alert('❌ ' + error.message);
+      }
+    }
+    
+    // 打开自动清理设置模态框
+    function openAutoCleanupModal() {
+      const modal = document.getElementById('modal-container');
+      modal.innerHTML = 
+        '<div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 transition-opacity">' +
+          '<div class="bg-white dark:bg-zinc-900 rounded-lg shadow-xl max-w-md w-full transform transition-all">' +
+            '<div class="p-6 border-b border-border-light dark:border-border-dark">' +
+              '<h3 class="text-lg font-semibold">🧹 自动清理非活跃用户</h3>' +
+            '</div>' +
+            '<div class="p-6 space-y-4">' +
+              '<div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-900/50 rounded-md">' +
+                '<span class="text-sm font-medium">启用自动清理</span>' +
+                '<label class="relative inline-flex items-center cursor-pointer">' +
+                  '<input type="checkbox" id="toggle-auto-cleanup" class="sr-only peer">' +
+                  '<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[\\'\\'] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>' +
+                '</label>' +
+              '</div>' +
+              '<div>' +
+                '<label class="text-sm font-medium mb-2 block">清理未登录天数</label>' +
+                '<input type="number" id="input-cleanup-days" min="7" max="365" value="30" class="w-full px-3 py-2 border border-border-light dark:border-border-dark rounded-md bg-background-light dark:bg-background-dark text-sm">' +
+                '<p class="text-xs text-muted-light mt-1">超过指定天数未登录的用户将被自动删除</p>' +
+              '</div>' +
+              '<div class="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-md">' +
+                '<p class="text-xs text-amber-700 dark:text-amber-500">⚠️ 清理操作不可恢复，建议定期备份数据</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="p-6 border-t border-border-light dark:border-border-dark flex justify-end gap-3">' +
+              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">取消</button>' +
+              '<button onclick="saveAutoCleanupSettings()" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-zinc-800">保存</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      modal.classList.add('modal-show');
+      
+      // 加载当前配置
+      fetch('/api/admin/getSystemSettings')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.settings) {
+            document.getElementById('toggle-auto-cleanup').checked = data.settings.autoCleanupEnabled || false;
+            document.getElementById('input-cleanup-days').value = data.settings.autoCleanupDays || 30;
+          }
+        })
+        .catch(err => console.error('加载配置失败:', err));
+    }
+    
+    // 保存自动清理设置
+    async function saveAutoCleanupSettings() {
+      try {
+        const enabled = document.getElementById('toggle-auto-cleanup').checked;
+        const days = parseInt(document.getElementById('input-cleanup-days').value);
+        
+        if (days < 7) {
+          alert('❌ 清理天数不能少于7天');
+          return;
+        }
+        
+        const response = await fetch('/api/admin/updateSystemSettings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            autoCleanupEnabled: enabled,
+            autoCleanupDays: days
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          showToast('✅ 自动清理设置已保存');
+          closeModal();
+        } else {
+          throw new Error(result.error || '保存失败');
+        }
+      } catch (error) {
+        alert('❌ ' + error.message);
+      }
+    }
+    
+    // Toast 提示
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-white dark:bg-zinc-900 border border-border-light dark:border-border-dark px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
     // 页面加载时获取数据
     document.addEventListener('DOMContentLoaded', () => {
       updateTime();
       fetchDashboardStats();
       loadSystemSettings();
-      loadRecentUsers();
       
       // 默认激活第一个导航项
       const firstNavLink = document.querySelector('.nav-link');

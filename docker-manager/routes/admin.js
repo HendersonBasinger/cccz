@@ -432,16 +432,16 @@ function getSystemSettings(req, res) {
                 siteName: settings.siteName || 'CFly',
                 enableRegister: settings.enableRegister !== false,
                 autoApproveOrder: settings.autoApproveOrder === true,
-                enableTrial: settings.enableTrial === true,
+                enableTrial: settings.enableTrial !== undefined ? settings.enableTrial : false,
                 trialDays: settings.trialDays || 1,
-                requireInviteCode: settings.requireInviteCode === true,
+                requireInviteCode: settings.requireInviteCode !== undefined ? settings.requireInviteCode : false,
                 pendingOrderExpiry: settings.pendingOrderExpiry || 30,
                 paymentOrderExpiry: settings.paymentOrderExpiry || 15,
-                customLink1Name: settings.customLink1Name || '',
-                customLink1Url: settings.customLink1Url || '',
-                customLink2Name: settings.customLink2Name || '',
-                customLink2Url: settings.customLink2Url || '',
-                enableAutoCleanup: settings.enableAutoCleanup === true,
+                link1Name: settings.customLink1Name || '',
+                link1Url: settings.customLink1Url || '',
+                link2Name: settings.customLink2Name || '',
+                link2Url: settings.customLink2Url || '',
+                autoCleanupEnabled: settings.enableAutoCleanup !== undefined ? settings.enableAutoCleanup : false,
                 autoCleanupDays: settings.autoCleanupDays || 7,
                 subUrl: settings.subUrl || '',
                 websiteUrl: settings.websiteUrl || '',
@@ -531,43 +531,43 @@ function updateSystemSettings(req, res) {
         const body = req.body;
         
         if (body.enableRegister !== undefined) {
-            currentSettings.enableRegister = body.enableRegister === 'true';
+            currentSettings.enableRegister = body.enableRegister === true || body.enableRegister === 'true';
         }
         if (body.autoApproveOrder !== undefined) {
-            currentSettings.autoApproveOrder = body.autoApproveOrder === 'true';
+            currentSettings.autoApproveOrder = body.autoApproveOrder === true || body.autoApproveOrder === 'true';
         }
         if (body.enableTrial !== undefined) {
-            currentSettings.enableTrial = body.enableTrial === 'true';
+            currentSettings.enableTrial = body.enableTrial === true || body.enableTrial === 'true';
         }
         if (body.trialDays !== undefined) {
-            currentSettings.trialDays = parseInt(body.trialDays) || 7;
+            currentSettings.trialDays = parseInt(body.trialDays) || 1;
         }
         if (body.requireInviteCode !== undefined) {
-            currentSettings.requireInviteCode = body.requireInviteCode === 'true';
+            currentSettings.requireInviteCode = body.requireInviteCode === true || body.requireInviteCode === 'true';
         }
         if (body.pendingOrderExpiry !== undefined) {
-            currentSettings.pendingOrderExpiry = parseInt(body.pendingOrderExpiry) || 0;
+            currentSettings.pendingOrderExpiry = parseInt(body.pendingOrderExpiry) || 30;
         }
         if (body.paymentOrderExpiry !== undefined) {
             currentSettings.paymentOrderExpiry = parseInt(body.paymentOrderExpiry) || 15;
         }
-        if (body.customLink1Name !== undefined) {
-            currentSettings.customLink1Name = body.customLink1Name || '';
+        if (body.link1Name !== undefined) {
+            currentSettings.customLink1Name = body.link1Name || '';
         }
-        if (body.customLink1Url !== undefined) {
-            currentSettings.customLink1Url = body.customLink1Url || '';
+        if (body.link1Url !== undefined) {
+            currentSettings.customLink1Url = body.link1Url || '';
         }
-        if (body.customLink2Name !== undefined) {
-            currentSettings.customLink2Name = body.customLink2Name || '';
+        if (body.link2Name !== undefined) {
+            currentSettings.customLink2Name = body.link2Name || '';
         }
-        if (body.customLink2Url !== undefined) {
-            currentSettings.customLink2Url = body.customLink2Url || '';
+        if (body.link2Url !== undefined) {
+            currentSettings.customLink2Url = body.link2Url || '';
         }
         if (body.siteName !== undefined) {
             currentSettings.siteName = body.siteName || 'CFly';
         }
-        if (body.enableAutoCleanup !== undefined) {
-            currentSettings.enableAutoCleanup = body.enableAutoCleanup === 'true';
+        if (body.autoCleanupEnabled !== undefined) {
+            currentSettings.enableAutoCleanup = body.autoCleanupEnabled === true || body.autoCleanupEnabled === 'true';
         }
         if (body.autoCleanupDays !== undefined) {
             currentSettings.autoCleanupDays = parseInt(body.autoCleanupDays) || 7;
@@ -922,13 +922,13 @@ function savePaymentChannel(req, res) {
     }
     
     try {
-        const { name, code, api_url, api_token } = req.body;
+        const { name, code, api_url, api_token, callback_url } = req.body;
         
         if (!name || !code || !api_url || !api_token) {
             return res.status(400).json({ error: '所有字段都不能为空' });
         }
         
-        db.createPaymentChannel(name, code, api_url, api_token);
+        db.createPaymentChannel(name, code, api_url, api_token, callback_url || null);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: '服务器错误' });
@@ -941,8 +941,8 @@ function updatePaymentChannel(req, res) {
     }
     
     try {
-        const { id, name, code, api_url, api_token } = req.body;
-        db.updatePaymentChannel(parseInt(id), name, code, api_url, api_token);
+        const { id, name, code, api_url, api_token, callback_url } = req.body;
+        db.updatePaymentChannel(parseInt(id), name, code, api_url, api_token, callback_url || null);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: '服务器错误' });
@@ -1324,9 +1324,29 @@ function clearSystemLogs(req, res) {
 function getStatistics(req, res) {
     try {
         const stats = db.getStats();
-        res.json(stats);
+        
+        // 获取配置节点数
+        const settings = db.getSettings() || {};
+        const configNodes = (settings.proxyIPs || []).length + (settings.bestDomains || []).length;
+        
+        // 转换为前端期望的格式
+        res.json({
+            totalUsers: stats.users?.total || 0,
+            activeUsers: stats.users?.active || 0,
+            expiredUsers: stats.users?.expired || 0,
+            configNodes: configNodes,
+            // 保留原始完整数据供其他使用
+            ...stats
+        });
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error('获取统计数据错误:', e);
+        res.status(500).json({ 
+            error: e.message,
+            totalUsers: 0,
+            activeUsers: 0,
+            expiredUsers: 0,
+            configNodes: 0
+        });
     }
 }
 
