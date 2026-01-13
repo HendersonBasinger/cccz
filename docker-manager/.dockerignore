@@ -39,6 +39,17 @@ Thumbs.db
 *.md
 !README.md
 
+# 图片和媒体文件
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+*.bmp
+*.tiff
+
 # Docker
 Dockerfile*
 docker-compose*.yml
