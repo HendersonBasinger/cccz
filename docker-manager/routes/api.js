@@ -5,6 +5,42 @@
 const db = require('../database');
 const crypto = require('crypto');
 
+// API 密钥验证中间件
+function verifyApiToken(req, res, next) {
+    const settings = db.getSettings() || {};
+    const apiToken = settings.apiToken;
+    
+    // 如果未设置 API 密钥，则允许访问（向后兼容）
+    if (!apiToken) {
+        console.warn('[API] ⚠️ 未设置 API 密钥，建议在设置中配置以提高安全性');
+        return next();
+    }
+    
+    // 检查请求头中的 Authorization
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            error: 'Unauthorized: Missing API token'
+        });
+    }
+    
+    // 支持 Bearer token 格式
+    const token = authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : authHeader;
+    
+    if (token !== apiToken) {
+        return res.status(403).json({
+            success: false,
+            error: 'Forbidden: Invalid API token'
+        });
+    }
+    
+    next();
+}
+
 // 获取用户列表 (供节点端拉取)
 function getUsers(req, res) {
     const users = db.getActiveUsers();
@@ -195,7 +231,44 @@ async function paymentNotify(req, res) {
     }
 }
 
+// API 密钥验证中间件
+function verifyApiToken(req, res, next) {
+    const settings = db.getSettings() || {};
+    const apiToken = settings.apiToken;
+    
+    // 如果未设置 API 密钥，则允许访问（向后兼容）
+    if (!apiToken) {
+        console.warn('[API] ⚠️ 未设置 API 密钥，建议在设置中配置以提高安全性');
+        return next();
+    }
+    
+    // 检查请求头中的 Authorization
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            error: 'Unauthorized: Missing API token'
+        });
+    }
+    
+    // 支持 Bearer token 格式
+    const token = authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : authHeader;
+    
+    if (token !== apiToken) {
+        return res.status(403).json({
+            success: false,
+            error: 'Forbidden: Invalid API token'
+        });
+    }
+    
+    next();
+}
+
 module.exports = {
+    verifyApiToken,
     getUsers,
     getAnnouncement,
     getPlans,

@@ -38,8 +38,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// API 路由 - 供节点端拉取
-app.get('/api/users', apiRoutes.getUsers);
+// API 路由 - 供节点端拉取（需要密钥验证）
+app.get('/api/users', apiRoutes.verifyApiToken, apiRoutes.getUsers);
 
 // 公告 API
 app.get('/api/announcement', apiRoutes.getAnnouncement);

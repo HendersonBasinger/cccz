@@ -442,6 +442,7 @@ function getSystemSettings(req, res) {
                 subUrl: settings.subUrl || '',
                 websiteUrl: settings.websiteUrl || '',
                 baseUrl: settings.baseUrl || '',
+                apiToken: settings.apiToken || '',
                 proxyIPs: settings.proxyIPs || [],
                 bestDomains: settings.bestDomains || []
             }
@@ -578,6 +579,9 @@ function updateSystemSettings(req, res) {
         }
         if (body.baseUrl !== undefined) {
             currentSettings.baseUrl = body.baseUrl || '';
+        }
+        if (body.apiToken !== undefined) {
+            currentSettings.apiToken = body.apiToken || '';
         }
         
         db.saveSettings(currentSettings);

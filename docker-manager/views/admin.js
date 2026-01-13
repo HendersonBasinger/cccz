@@ -822,7 +822,7 @@ function renderAdminPanel() {
               </div>
 
               <!-- 自动清理非活跃用户 -->
-              <div class="p-6">
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex items-center justify-between mb-4">
                   <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-2">
@@ -842,6 +842,21 @@ function renderAdminPanel() {
                     <input id="input-autoCleanupDays" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm" type="number" min="7" value="7"/>
                   </div>
                   <span class="text-sm text-slate-500 dark:text-slate-400 mt-5">天 (超过此天数未登录的用户将被自动删除)</span>
+                </div>
+              </div>
+
+              <!-- API 密钥设置 -->
+              <div class="p-6">
+                <div class="flex flex-col gap-1 mb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">key</span>
+                    <label class="text-sm font-semibold">API 密钥</label>
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">节点端访问用户数据接口需要验证此密钥，留空则不验证（不推荐）</p>
+                </div>
+                <div class="flex items-center gap-2 max-w-2xl">
+                  <input id="input-apiToken" class="flex-1 px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm font-mono" type="text" placeholder="留空表示不启用密钥验证"/>
+                  <button onclick="generateApiToken()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors whitespace-nowrap">生成密钥</button>
                 </div>
               </div>
 
@@ -5010,6 +5025,11 @@ function renderAdminPanel() {
             document.getElementById('input-autoCleanupDays').value = settings.autoCleanupDays || 7;
           }
           
+          // 加载 API 密钥配置
+          if (document.getElementById('input-apiToken')) {
+            document.getElementById('input-apiToken').value = settings.apiToken || '';
+          }
+          
           // 加载仪表盘快捷操作开关
           const toggleRequireInvite = document.getElementById('toggle-require-invite');
           if (toggleRequireInvite) {
@@ -5050,6 +5070,10 @@ function renderAdminPanel() {
         
         if (autoCleanupEnabled) settings.autoCleanupEnabled = autoCleanupEnabled.checked;
         if (autoCleanupDays) settings.autoCleanupDays = parseInt(autoCleanupDays.value);
+        
+        // 添加 API 密钥配置
+        const apiToken = document.getElementById('input-apiToken');
+        if (apiToken) settings.apiToken = apiToken.value.trim();
         
         const response = await fetch('/api/admin/updateSystemSettings', {
           method: 'POST',
@@ -5125,6 +5149,15 @@ function renderAdminPanel() {
     async function adminLogout() {
       await fetch('/api/admin/logout', {method: 'POST'});
       location.reload();
+    }
+    
+    // 生成 API 密钥
+    function generateApiToken() {
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      document.getElementById('input-apiToken').value = token;
+      showToast('✅ 已生成新的 API 密钥，请记得保存设置');
     }
     
     // 更新时间显示
