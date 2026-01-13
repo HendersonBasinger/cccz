@@ -729,6 +729,21 @@ function renderAdminPanel() {
                 </div>
               </div>
 
+              <!-- 自动审核订单 -->
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">check_circle</span>
+                    <label class="text-sm font-semibold">自动审核订单</label>
+                  </div>
+                  <p class="text-sm text-slate-500 dark:text-slate-400">开启后，用户订购<strong class="text-emerald-600 dark:text-emerald-400">免费套餐（价格为0）</strong>将自动审核通过；付费套餐仍需等待支付或手动审核</p>
+                </div>
+                <label class="switch-shadcn">
+                  <input id="input-autoApproveOrder" type="checkbox"/>
+                  <span class="slider-shadcn"></span>
+                </label>
+              </div>
+
               <!-- 注册需要邀请码 -->
               <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div class="flex flex-col gap-1">
@@ -4975,6 +4990,7 @@ function renderAdminPanel() {
           
           document.getElementById('input-enableTrial').checked = settings.enableTrial || false;
           document.getElementById('input-trialDays').value = settings.trialDays || 1;
+          document.getElementById('input-autoApproveOrder').checked = settings.autoApproveOrder || false;
           document.getElementById('input-requireInviteCode').checked = settings.requireInviteCode || false;
           document.getElementById('input-pendingOrderExpiry').value = settings.pendingOrderExpiry || 30;
           document.getElementById('input-paymentOrderExpiry').value = settings.paymentOrderExpiry || 15;
@@ -5010,6 +5026,7 @@ function renderAdminPanel() {
         const settings = {
           enableTrial: document.getElementById('input-enableTrial').checked,
           trialDays: parseInt(document.getElementById('input-trialDays').value),
+          autoApproveOrder: document.getElementById('input-autoApproveOrder').checked,
           requireInviteCode: document.getElementById('input-requireInviteCode').checked,
           pendingOrderExpiry: parseInt(document.getElementById('input-pendingOrderExpiry').value),
           paymentOrderExpiry: parseInt(document.getElementById('input-paymentOrderExpiry').value)

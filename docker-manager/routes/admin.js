@@ -530,7 +530,15 @@ function updateSystemSettings(req, res) {
             currentSettings.enableRegister = body.enableRegister === true || body.enableRegister === 'true';
         }
         if (body.autoApproveOrder !== undefined) {
-            currentSettings.autoApproveOrder = body.autoApproveOrder === true || body.autoApproveOrder === 'true';
+            const newAutoApprove = body.autoApproveOrder === true || body.autoApproveOrder === 'true';
+            const wasAutoApproveDisabled = currentSettings.autoApproveOrder !== true;
+            
+            // 如果从关闭变为开启，递增版本号（重置所有用户的使用次数）
+            if (wasAutoApproveDisabled && newAutoApprove) {
+                currentSettings.autoApproveVersion = (currentSettings.autoApproveVersion || 0) + 1;
+            }
+            
+            currentSettings.autoApproveOrder = newAutoApprove;
         }
         if (body.enableTrial !== undefined) {
             currentSettings.enableTrial = body.enableTrial === true || body.enableTrial === 'true';
@@ -726,7 +734,13 @@ function getOrders(req, res) {
     }
     
     const status = req.query.status || 'all';
-    let orders = db.getOrders(status);
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const offset = (page - 1) * pageSize;
+    
+    // 获取订单列表和总数
+    let orders = db.getOrders(status, pageSize, offset);
+    const total = db.getOrdersCount(status);
     
     // 检查订单过期时间
     const settings = db.getSettings() || {};
@@ -746,7 +760,16 @@ function getOrders(req, res) {
         return order;
     });
     
-    res.json({ success: true, orders: orders });
+    res.json({ 
+        success: true, 
+        orders: orders,
+        pagination: {
+            page: page,
+            pageSize: pageSize,
+            total: total,
+            totalPages: Math.ceil(total / pageSize)
+        }
+    });
 }
 
 function approveOrder(req, res) {

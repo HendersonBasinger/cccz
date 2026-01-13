@@ -278,19 +278,40 @@ async function createOrder(req, res) {
         // 免费套餐处理
         if (plan.price === 0) {
             if (settings.autoApproveOrder) {
-                // 自动审核：直接通过
-                const uuidUser = db.getUserByUUID(user.uuid);
-                const currentExpiry = uuidUser && uuidUser.expiry ? uuidUser.expiry : Date.now();
-                const newExpiry = Math.max(currentExpiry, Date.now()) + (plan.duration_days * 24 * 60 * 60 * 1000);
+                // 检查用户是否还有自动审核机会
+                const autoApproveVersion = settings.autoApproveVersion || 0;
+                const userAccount = db.getUserAccountByUUID(user.uuid);
+                const userAutoApproveVersion = userAccount ? (userAccount.auto_approve_version || 0) : 0;
                 
-                db.updateUserExpiry(user.uuid, newExpiry);
-                db.updateOrderStatus(orderId, 'approved', Date.now());
-                
-                return res.json({ 
-                    success: true, 
-                    message: '订单已自动审核通过',
-                    autoApproved: true
-                });
+                // 如果用户的版本号小于系统版本号，说明还可以使用自动审核
+                if (userAutoApproveVersion < autoApproveVersion) {
+                    // 自动审核：直接通过
+                    const uuidUser = db.getUserByUUID(user.uuid);
+                    const currentExpiry = uuidUser && uuidUser.expiry ? uuidUser.expiry : Date.now();
+                    const newExpiry = Math.max(currentExpiry, Date.now()) + (plan.duration_days * 24 * 60 * 60 * 1000);
+                    
+                    db.updateUserExpiry(user.uuid, newExpiry);
+                    db.updateOrderStatus(orderId, 'approved', Date.now());
+                    
+                    // 更新用户的自动审核版本号
+                    if (userAccount) {
+                        db.updateUserAutoApproveVersion(userAccount.id, autoApproveVersion);
+                    }
+                    
+                    return res.json({ 
+                        success: true, 
+                        message: '订单已自动审核通过',
+                        autoApproved: true
+                    });
+                } else {
+                    // 已经使用过自动审核，需要等待手动审核
+                    return res.json({ 
+                        success: true, 
+                        message: '订单创建成功，请等待管理员审核（您已使用过本次自动审核机会）',
+                        orderId: orderId,
+                        needApproval: true
+                    });
+                }
             } else {
                 // 需要审核
                 return res.json({ 
@@ -472,19 +493,63 @@ async function checkin(req, res) {
             return res.status(400).json({ error: '今天已签到' });
         }
         
-        // 增加1天有效期
+        // 计算连续签到天数
+        let checkinStreak = user.checkin_streak || 0;
+        let totalCheckinDays = user.total_checkin_days || 0;
+        
+        // 检查是否连续签到（昨天是否签到）
+        const yesterdayStart = new Date(todayStart);
+        yesterdayStart.setTime(yesterdayStart.getTime() - 24 * 60 * 60 * 1000);
+        
+        if (user.last_checkin && user.last_checkin >= yesterdayStart.getTime()) {
+            // 连续签到
+            checkinStreak += 1;
+        } else {
+            // 断签，重置连续天数
+            checkinStreak = 1;
+        }
+        
+        totalCheckinDays += 1;
+        
+        // 基础奖励：1天
+        let rewardDays = 1;
+        let message = '签到成功！有效期 +1 天';
+        let milestoneReward = 0;
+        
+        // 连续签到里程碑奖励
+        if (checkinStreak === 7) {
+            milestoneReward = 3;
+            rewardDays += milestoneReward;
+            message = `🎉 连续签到 7 天！额外奖励 ${milestoneReward} 天，总共 +${rewardDays} 天`;
+        } else if (checkinStreak === 30) {
+            milestoneReward = 10;
+            rewardDays += milestoneReward;
+            message = `🎊 连续签到 30 天！额外奖励 ${milestoneReward} 天，总共 +${rewardDays} 天`;
+        } else if (checkinStreak % 7 === 0 && checkinStreak > 7) {
+            // 每连续7天额外奖励1天
+            milestoneReward = 1;
+            rewardDays += milestoneReward;
+            message = `✨ 连续签到 ${checkinStreak} 天！额外奖励 ${milestoneReward} 天，总共 +${rewardDays} 天`;
+        }
+        
+        // 增加有效期
         const currentExpiry = uuidUser.expiry || Date.now();
-        const newExpiry = Math.max(currentExpiry, Date.now()) + (24 * 60 * 60 * 1000);
+        const newExpiry = Math.max(currentExpiry, Date.now()) + (rewardDays * 24 * 60 * 60 * 1000);
         
         db.updateUserExpiry(user.uuid, newExpiry);
         
-        // 更新签到时间
+        // 更新签到时间和统计
         db.updateLastCheckin(user.id, Date.now());
+        db.updateCheckinStats(user.id, checkinStreak, totalCheckinDays);
         
         res.json({ 
             success: true, 
-            message: '签到成功！有效期 +1 天',
-            new_expiry: newExpiry
+            message: message,
+            new_expiry: newExpiry,
+            checkin_streak: checkinStreak,
+            total_checkin_days: totalCheckinDays,
+            reward_days: rewardDays,
+            milestone_reward: milestoneReward
         });
         
     } catch (e) {
@@ -534,6 +599,30 @@ async function cancelOrder(req, res) {
     }
 }
 
+// 获取最佳域名列表（用于用户端显示节点状态）
+// 需要登录才能访问
+function getBestDomains(req, res) {
+    try {
+        // 验证用户是否已登录
+        const user = validateUserSession(req);
+        if (!user) {
+            return res.status(401).json({ 
+                success: false, 
+                error: '请先登录' 
+            });
+        }
+        
+        const bestDomains = db.getBestDomains();
+        res.json({
+            success: true,
+            domains: bestDomains
+        });
+    } catch (e) {
+        console.error('获取最佳域名错误:', e);
+        res.status(500).json({ error: '服务器错误' });
+    }
+}
+
 module.exports = {
     register,
     login,
@@ -545,5 +634,6 @@ module.exports = {
     payOrder,
     checkin,
     resetUUID,
-    cancelOrder
+    cancelOrder,
+    getBestDomains
 };

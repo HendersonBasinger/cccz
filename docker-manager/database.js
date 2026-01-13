@@ -39,6 +39,8 @@ function initDatabase() {
             created_at INTEGER NOT NULL,
             last_login INTEGER NOT NULL,
             last_checkin INTEGER DEFAULT 0,
+            checkin_streak INTEGER DEFAULT 0,
+            total_checkin_days INTEGER DEFAULT 0,
             auto_approve_version INTEGER DEFAULT 0,
             FOREIGN KEY (uuid) REFERENCES users(uuid) ON DELETE CASCADE
         );
@@ -134,6 +136,39 @@ function initDatabase() {
             db.exec('ALTER TABLE user_accounts ADD COLUMN last_checkin INTEGER DEFAULT 0');
             console.log('[数据库迁移] ✅ last_checkin 字段添加成功');
         }
+        
+        const hasCheckinStreak = tableInfo.some(col => col.name === 'checkin_streak');
+        if (!hasCheckinStreak) {
+            console.log('[数据库迁移] 添加 checkin_streak 字段...');
+            db.exec('ALTER TABLE user_accounts ADD COLUMN checkin_streak INTEGER DEFAULT 0');
+            console.log('[数据库迁移] ✅ checkin_streak 字段添加成功');
+        }
+        
+        const hasTotalCheckinDays = tableInfo.some(col => col.name === 'total_checkin_days');
+        if (!hasTotalCheckinDays) {
+            console.log('[数据库迁移] 添加 total_checkin_days 字段...');
+            db.exec('ALTER TABLE user_accounts ADD COLUMN total_checkin_days INTEGER DEFAULT 0');
+            console.log('[数据库迁移] ✅ total_checkin_days 字段添加成功');
+        }
+        
+        // 修复现有用户的 NULL 值
+        console.log('[数据库迁移] 修复签到字段的 NULL 值...');
+        db.exec(`
+            UPDATE user_accounts 
+            SET last_checkin = 0 
+            WHERE last_checkin IS NULL
+        `);
+        db.exec(`
+            UPDATE user_accounts 
+            SET checkin_streak = 0 
+            WHERE checkin_streak IS NULL
+        `);
+        db.exec(`
+            UPDATE user_accounts 
+            SET total_checkin_days = 0 
+            WHERE total_checkin_days IS NULL
+        `);
+        console.log('[数据库迁移] ✅ NULL 值修复完成');
         
         const hasAutoApproveVersion = tableInfo.some(col => col.name === 'auto_approve_version');
         if (!hasAutoApproveVersion) {
@@ -295,7 +330,20 @@ function createUserAccount(username, passwordHash, email, uuid) {
 // 根据用户名获取用户账号
 function getUserByUsername(username) {
     const stmt = getDb().prepare("SELECT * FROM user_accounts WHERE username = ?");
-    return stmt.get(username);
+    const user = stmt.get(username);
+    if (user) {
+        // 确保签到相关字段存在并有默认值
+        if (user.last_checkin === undefined || user.last_checkin === null) {
+            user.last_checkin = 0;
+        }
+        if (user.checkin_streak === undefined || user.checkin_streak === null) {
+            user.checkin_streak = 0;
+        }
+        if (user.total_checkin_days === undefined || user.total_checkin_days === null) {
+            user.total_checkin_days = 0;
+        }
+    }
+    return user;
 }
 
 // 根据ID获取用户账号
@@ -303,9 +351,15 @@ function getUserById(userId) {
     const stmt = getDb().prepare("SELECT * FROM user_accounts WHERE id = ?");
     const user = stmt.get(userId);
     if (user) {
-        // 确保last_checkin字段存在
-        if (user.last_checkin === undefined) {
+        // 确保签到相关字段存在并有默认值
+        if (user.last_checkin === undefined || user.last_checkin === null) {
             user.last_checkin = 0;
+        }
+        if (user.checkin_streak === undefined || user.checkin_streak === null) {
+            user.checkin_streak = 0;
+        }
+        if (user.total_checkin_days === undefined || user.total_checkin_days === null) {
+            user.total_checkin_days = 0;
         }
     }
     return user;
@@ -339,6 +393,18 @@ function updateLastLogin(userId) {
 function updateLastCheckin(userId, timestamp) {
     const stmt = getDb().prepare("UPDATE user_accounts SET last_checkin = ? WHERE id = ?");
     return stmt.run(timestamp, userId);
+}
+
+// 更新签到统计（连续签到和累计签到）
+function updateCheckinStats(userId, streak, totalDays) {
+    const stmt = getDb().prepare("UPDATE user_accounts SET checkin_streak = ?, total_checkin_days = ? WHERE id = ?");
+    return stmt.run(streak, totalDays, userId);
+}
+
+// 更新用户的自动审核版本号
+function updateUserAutoApproveVersion(userId, version) {
+    const stmt = getDb().prepare("UPDATE user_accounts SET auto_approve_version = ? WHERE id = ?");
+    return stmt.run(version, userId);
 }
 
 // 更新用户密码
@@ -484,8 +550,8 @@ function updatePlansSortOrder(orders) {
 
 // --- 订单相关操作 ---
 
-// 获取订单列表
-function getOrders(status = 'all', limit = 100) {
+// 获取订单列表（支持分页）
+function getOrders(status = 'all', limit = 100, offset = 0) {
     let sql = `
         SELECT o.*, 
                COALESCE(p.name, '已删除套餐') as plan_name, 
@@ -499,10 +565,21 @@ function getOrders(status = 'all', limit = 100) {
     if (status !== 'all') {
         sql += ` WHERE o.status = ?`;
     }
-    sql += ` ORDER BY o.created_at DESC LIMIT ?`;
+    sql += ` ORDER BY o.created_at DESC LIMIT ? OFFSET ?`;
     
     const stmt = getDb().prepare(sql);
-    return status !== 'all' ? stmt.all(status, limit) : stmt.all(limit);
+    return status !== 'all' ? stmt.all(status, limit, offset) : stmt.all(limit, offset);
+}
+
+// 获取订单总数
+function getOrdersCount(status = 'all') {
+    let sql = 'SELECT COUNT(*) as count FROM orders o';
+    if (status !== 'all') {
+        sql += ' WHERE o.status = ?';
+    }
+    const stmt = getDb().prepare(sql);
+    const result = status !== 'all' ? stmt.get(status) : stmt.get();
+    return result ? result.count : 0;
 }
 
 // 获取用户订单
@@ -986,6 +1063,8 @@ module.exports = {
     updateUserAccountPassword,
     updateLastLogin,
     updateLastCheckin,
+    updateCheckinStats,
+    updateUserAutoApproveVersion,
     updateUserPassword,
     updateUserPasswordByUUID,
     
@@ -1010,6 +1089,7 @@ module.exports = {
     
     // 订单
     getOrders,
+    getOrdersCount,
     getUserOrders,
     getOrdersByPlanId,
     getPendingOrdersByPlanId,
