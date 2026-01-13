@@ -27,6 +27,77 @@ function formatBeijingDate(date) {
     return `${year}-${month}-${day}`;
 }
 
+// 生成一周签到日历
+function generateWeekCalendar(lastCheckin, checkinStreak) {
+    const now = new Date();
+    const beijingNow = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+    const todayDay = beijingNow.getUTCDay(); // 0=Sunday, 1=Monday, ...
+    const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    
+    let html = '';
+    
+    for (let i = 0; i < 7; i++) {
+        const dayOffset = i - todayDay;
+        const date = new Date(beijingNow);
+        date.setUTCDate(date.getUTCDate() + dayOffset);
+        
+        const isToday = dayOffset === 0;
+        const isPast = dayOffset < 0;
+        const isFuture = dayOffset > 0;
+        const isSunday = i === 0;
+        
+        // 判断是否已签到
+        let isCheckedIn = false;
+        if (isPast && checkinStreak > 0) {
+            const daysAgo = Math.abs(dayOffset);
+            isCheckedIn = daysAgo < checkinStreak;
+        } else if (isToday && lastCheckin) {
+            const todayStart = new Date(beijingNow.getUTCFullYear(), beijingNow.getUTCMonth(), beijingNow.getUTCDate());
+            todayStart.setTime(todayStart.getTime() - 8 * 60 * 60 * 1000);
+            isCheckedIn = lastCheckin >= todayStart.getTime();
+        }
+        
+        html += '<div class="flex flex-col items-center gap-1">';
+        
+        if (isCheckedIn) {
+            // 已签到 - 绿色打勾
+            html += '<div class="w-full aspect-square rounded border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center">';
+            html += '<span class="material-symbols-outlined text-white text-[14px] md:text-[16px]">check</span>';
+            html += '</div>';
+        } else if (isToday) {
+            // 今天未签到 - 高亮边框
+            html += '<div class="w-full aspect-square rounded border-2 border-primary flex items-center justify-center bg-primary/5">';
+            html += '<span class="text-[10px] font-bold text-primary">今天</span>';
+            html += '</div>';
+        } else if (isSunday && isFuture) {
+            // 未来的周日 - 显示礼物图标（额外奖励提示）
+            html += '<div class="w-full aspect-square rounded border border-dashed border-amber-300 dark:border-amber-700 flex items-center justify-center bg-amber-50/50 dark:bg-amber-900/10">';
+            html += '<span class="material-symbols-outlined text-amber-500 text-[14px] md:text-[16px]">redeem</span>';
+            html += '</div>';
+        } else if (isFuture) {
+            // 未来的日期 - 显示 +1
+            html += '<div class="w-full aspect-square rounded border border-slate-200 dark:border-zinc-800 flex items-center justify-center">';
+            html += '<span class="text-[10px] text-slate-400">+1</span>';
+            html += '</div>';
+        } else {
+            // 过去未签到的日期 - 灰色
+            html += '<div class="w-full aspect-square rounded border border-slate-200 dark:border-zinc-800 flex items-center justify-center opacity-40">';
+            html += '<span class="text-[10px] text-slate-400">-</span>';
+            html += '</div>';
+        }
+        
+        // 星期标签 - 今天加粗显示
+        const dayLabel = weekDays[i];
+        const labelClass = isToday 
+            ? 'font-bold text-primary text-[11px]' 
+            : 'text-slate-500 dark:text-zinc-500 text-[10px]';
+        html += `<span class="${labelClass}">${dayLabel}</span>`;
+        html += '</div>';
+    }
+    
+    return html;
+}
+
 // 渲染登录/注册页面
 async function renderAuthPage() {
     const settings = db.getSettings() || {};
@@ -40,6 +111,7 @@ async function renderAuthPage() {
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>${siteName} - 登录</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%23000'/><path d='M 60 15 L 30 50 h 15 L 40 85 L 70 50 H 55 Z' fill='%23fff'/></svg>">
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
@@ -160,13 +232,31 @@ ${requireInviteCode ? `<div class="space-y-2">
 </div>
 
 <div class="fixed bottom-6 right-6 z-10">
-<button onclick="document.documentElement.classList.toggle('dark');updateNetworkTheme();" class="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+<button onclick="toggleDarkMode()" class="w-10 h-10 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
 <span class="material-symbols-outlined dark:hidden">dark_mode</span>
 <span class="material-symbols-outlined hidden dark:block">light_mode</span>
 </button>
 </div>
 
 <script>
+// 初始化深色模式
+(function() {
+  const isDark = localStorage.getItem('darkMode') === 'true';
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+
+// 切换深色模式函数
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark');
+  const isDark = document.documentElement.classList.contains('dark');
+  localStorage.setItem('darkMode', isDark);
+  if (typeof updateNetworkTheme === 'function') {
+    updateNetworkTheme();
+  }
+}
+
 // 全球边缘节点网络背景动画
 (function() {
   const container = document.getElementById('network-bg');
@@ -474,6 +564,7 @@ async function renderUserPanel(user) {
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>用户中心 - ${siteName}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='16' fill='%23000'/><path d='M 60 15 L 30 50 h 15 L 40 85 L 70 50 H 55 Z' fill='%23fff'/></svg>">
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
@@ -585,6 +676,10 @@ main {
 <span class="material-symbols-outlined text-[20px]">account_circle</span>
 账号信息
 </a>
+<a onclick="switchPage('node-status')" class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors" id="nav-node-status">
+<span class="material-symbols-outlined text-[20px]">cloud</span>
+节点状态
+</a>
 <a onclick="switchPage('orders')" class="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-colors" id="nav-orders">
 <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
 我的订单
@@ -613,9 +708,9 @@ main {
 <span class="material-symbols-outlined text-slate-400 hidden sm:block">dashboard</span>
 <h1 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-500" id="pageTitle">Dashboard / Account</h1>
 </div>
-<div class="flex items-center gap-3">
-${quickLinks.map(link => '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer" class="hidden sm:flex text-sm border border-slate-200 dark:border-zinc-800 px-3 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors items-center gap-2">' +
-'<span class="material-symbols-outlined text-[18px]">open_in_new</span>' +
+<div class="flex items-center gap-2 md:gap-3">
+${quickLinks.map(link => '<a href="' + link.url + '" target="_blank" rel="noopener noreferrer" class="flex text-[10px] md:text-sm border border-slate-200 dark:border-zinc-800 px-2 md:px-3 py-1 md:py-1.5 rounded hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors items-center gap-1 md:gap-2">' +
+'<span class="material-symbols-outlined text-[16px] md:text-[18px]">open_in_new</span>' +
 link.name +
 '</a>').join('')}
 <button onclick="showAnnouncements()" class="text-sm bg-primary text-white px-3 py-1.5 rounded hover:opacity-90 transition-opacity flex items-center gap-2">
@@ -694,18 +789,44 @@ ${statusText}
 </section>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-<div class="p-4 md:p-6 border border-slate-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-950 flex flex-col justify-between">
+<!-- 签到中心卡片 -->
+<div class="p-4 md:p-6 border border-slate-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-950 flex flex-col space-y-4 md:space-y-6">
 <div>
-<div class="flex items-center gap-2 mb-2">
-<span class="material-symbols-outlined text-[18px] md:text-[20px]">calendar_today</span>
-<h3 class="text-sm md:text-base font-semibold">每日签到</h3>
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] md:text-[20px]">event_available</span>
+<h3 class="text-sm md:text-base font-semibold">签到中心</h3>
 </div>
-<p class="text-xs md:text-sm text-slate-500 dark:text-zinc-500 mb-4 md:mb-6">每日签到可获得1天使用时长奖励，系统将在每天 0:00 重置。</p>
+<span class="text-xs font-medium bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded">已连续签到 ${user.checkin_streak || 0} 天</span>
 </div>
+<p class="text-xs md:text-sm text-slate-500 dark:text-zinc-500">每日签到可获得1天时长，连续签到奖励更多。</p>
+</div>
+
+<!-- 一周签到日历 -->
+<div class="grid grid-cols-7 gap-1.5 md:gap-2">
+${generateWeekCalendar(user.last_checkin, user.checkin_streak || 0)}
+</div>
+
+<!-- 里程碑提示 -->
+<div class="p-2.5 md:p-3 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 rounded-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] md:text-[16px] text-slate-600 dark:text-zinc-400">info</span>
+<p class="text-[10px] md:text-xs text-slate-600 dark:text-zinc-400">奖励里程碑：连续签到 7 天额外奖励 3 天时长</p>
+</div>
+</div>
+
+<!-- 签到按钮和统计 -->
+<div class="space-y-2 md:space-y-3">
 <button onclick="handleCheckin()" ${hasCheckedIn ? 'disabled' : ''} class="w-full bg-primary text-white py-2 md:py-2.5 rounded-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2 font-medium text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed">
 <span class="material-symbols-outlined text-[18px] md:text-[20px]">how_to_reg</span>
 ${hasCheckedIn ? '今日已签到' : '立即签到'}
 </button>
+<div class="flex justify-center items-center gap-2 md:gap-3 text-[10px] md:text-[11px] text-slate-400 uppercase tracking-widest font-medium">
+<span>累计签到: ${user.total_checkin_days || 0} 天</span>
+<span class="w-1 h-1 rounded-full bg-slate-300"></span>
+<span>累计奖励: ${(user.total_checkin_days || 0) + Math.floor((user.total_checkin_days || 0) / 7) * 3} 天</span>
+</div>
+</div>
 </div>
 
 <div class="p-4 md:p-6 border border-slate-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-950 flex flex-col justify-between">
@@ -751,6 +872,42 @@ ${hasCheckedIn ? '今日已签到' : '立即签到'}
 </section>
 </div>
 
+<!-- 节点状态页面 -->
+<div id="page-node-status" class="hidden">
+<section>
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-[18px] md:text-[20px]">cloud</span>
+<h2 class="text-base md:text-lg font-semibold tracking-tight">节点运行状态</h2>
+</div>
+<div class="border border-slate-200 dark:border-zinc-800 rounded bg-white dark:bg-zinc-950 overflow-hidden">
+<div class="px-3 md:px-4 py-2 md:py-3 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/30 flex justify-between items-center">
+<span class="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">实时节点监测</span>
+<span id="node-status-time-user" class="text-[10px] md:text-xs text-slate-400 dark:text-zinc-500">最后检测: --:--:--</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50/30 dark:bg-zinc-900">
+<tr>
+<th class="px-2 md:px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 w-8 md:w-12 text-center text-[10px] md:text-sm">序号</th>
+<th class="px-2 md:px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 text-[10px] md:text-sm">名称</th>
+<th class="px-2 md:px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 text-[10px] md:text-sm">节点</th>
+<th class="px-2 md:px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 text-right text-[10px] md:text-sm">状态</th>
+</tr>
+</thead>
+<tbody id="node-status-list-user" class="divide-y divide-slate-100 dark:divide-zinc-800">
+<tr>
+<td colspan="4" class="px-4 py-8 text-center text-slate-400 dark:text-zinc-600">
+<span class="material-symbols-outlined text-4xl mb-2 block">cloud_off</span>
+<p class="text-sm">正在加载节点状态...</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</div>
+
 <!-- 我的订单页面 -->
 <div id="page-orders" class="hidden">
 <section>
@@ -776,16 +933,6 @@ ${hasCheckedIn ? '今日已签到' : '立即签到'}
 <div id="plansList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
 <div class="text-center text-slate-500 py-8 col-span-full">加载中...</div>
 </div>
-<div class="mt-12 md:mt-16 p-6 md:p-8 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center">
-<p class="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
-支付遇到问题？请联系在线客服或查看使用文档获取帮助
-</p>
-<div class="mt-4 flex justify-center gap-4 text-xs md:text-sm">
-<a href="#" class="font-semibold hover:underline text-slate-900 dark:text-white">联系支持</a>
-<span class="text-slate-300 dark:text-zinc-700">|</span>
-<a href="#" class="font-semibold hover:underline text-slate-900 dark:text-white">使用文档</a>
-</div>
-</div>
 </div>
 
 <footer class="pt-12 pb-8 text-center border-t border-slate-100 dark:border-zinc-900">
@@ -795,7 +942,7 @@ ${hasCheckedIn ? '今日已签到' : '立即签到'}
 </main>
 
 <div class="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50">
-<button onclick="document.documentElement.classList.toggle('dark')" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
+<button onclick="toggleDarkMode()" class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 shadow-lg flex items-center justify-center hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors">
 <span class="material-symbols-outlined text-[20px] dark:hidden">dark_mode</span>
 <span class="material-symbols-outlined text-[20px] hidden dark:block">light_mode</span>
 </button>
@@ -817,8 +964,23 @@ ${hasCheckedIn ? '今日已签到' : '立即签到'}
 </div>
 
 <script>
+// 初始化深色模式
+(function() {
+  const isDark = localStorage.getItem('darkMode') === 'true';
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+
+// 切换深色模式函数
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark');
+  const isDark = document.documentElement.classList.contains('dark');
+  localStorage.setItem('darkMode', isDark);
+}
+
 let currentPage = 'account';
-const navItems = ['account', 'orders', 'plans'];
+const navItems = ['account', 'node-status', 'orders', 'plans'];
 
 // 侧边栏切换（移动端）
 function toggleSidebar() {
@@ -857,13 +1019,163 @@ function switchPage(page) {
   
   const titles = {
     account: 'Dashboard / Account',
+    'node-status': 'Dashboard / Node Status',
     orders: 'Dashboard / Orders',
     plans: 'Dashboard / Plans'
   };
   document.getElementById('pageTitle').textContent = titles[page];
   
+  if(page === 'node-status') loadUserNodeStatus();
   if(page === 'orders') loadOrders();
   if(page === 'plans') loadPlans();
+}
+
+// 加载用户端节点状态
+async function loadUserNodeStatus() {
+  try {
+    const response = await fetch('/api/best-domains');
+    const data = await response.json();
+    
+    if (!data.success || !data.domains || data.domains.length === 0) {
+      renderUserNodeStatus([]);
+      return;
+    }
+    
+    const currentBestDomains = data.domains;
+    const nodes = [];
+    
+    for (let i = 0; i < currentBestDomains.length; i++) {
+      const domain = currentBestDomains[i];
+      const parsed = parseDomainEntry(domain);
+      if (parsed) {
+        let nodeAddress;
+        if (parsed.isDomain) {
+          nodeAddress = parsed.address + ':' + parsed.port;
+        } else if (parsed.address.includes(':')) {
+          nodeAddress = '[' + parsed.address + ']:' + parsed.port;
+        } else {
+          nodeAddress = parsed.address + ':' + parsed.port;
+        }
+        
+        // 构建完整的节点名称（包含地区信息）
+        let nodeName = parsed.label;
+        if (parsed.region) {
+          nodeName = parsed.label + ' ' + parsed.region;
+        }
+        
+        nodes.push({
+          id: i + 1,
+          name: nodeName,
+          node: nodeAddress,
+          status: '在线'
+        });
+      }
+    }
+    
+    renderUserNodeStatus(nodes);
+    
+    // 更新检测时间
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+    document.getElementById('node-status-time-user').textContent = '最后检测: ' + timeStr;
+  } catch (error) {
+    console.error('加载节点状态失败:', error);
+    renderUserNodeStatus([]);
+  }
+}
+
+// 解析域名条目
+function parseDomainEntry(entry) {
+  try {
+    let addressPart, infoPart;
+    if (entry.includes('#')) {
+      const parts = entry.split('#');
+      addressPart = parts[0].trim();
+      infoPart = parts[1].trim();
+    } else {
+      addressPart = entry.trim();
+      infoPart = '';
+    }
+    
+    let address, port, isDomain = false;
+    
+    if (addressPart.startsWith('[')) {
+      const ipv6Match = addressPart.match(/^\\[([^\\]]+)\\]:([0-9]+)$/);
+      if (!ipv6Match) return null;
+      address = ipv6Match[1];
+      port = ipv6Match[2];
+      isDomain = false;
+    } else if (addressPart.match(/^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:/)) {
+      const ipv4Match = addressPart.match(/^([0-9.]+):([0-9]+)$/);
+      if (!ipv4Match) return null;
+      address = ipv4Match[1];
+      port = ipv4Match[2];
+      isDomain = false;
+    } else {
+      isDomain = true;
+      if (addressPart.includes(':')) {
+        const domainMatch = addressPart.match(/^([^:]+):([0-9]+)$/);
+        if (domainMatch) {
+          address = domainMatch[1];
+          port = domainMatch[2];
+        } else {
+          address = addressPart;
+          port = '443';
+        }
+      } else {
+        address = addressPart;
+        port = '443';
+      }
+    }
+    
+    let label, region;
+    if (isDomain) {
+      label = address;
+      region = '';
+    } else if (infoPart) {
+      const infoMatch = infoPart.match(/^(.+?)\\s+([A-Z]{2,4})$/);
+      if (infoMatch) {
+        label = infoMatch[1];
+        region = infoMatch[2];
+      } else {
+        label = infoPart;
+        region = '';
+      }
+    } else {
+      label = address;
+      region = '';
+    }
+    
+    return { address, port, label, region, isDomain };
+  } catch (e) {
+    console.error('解析域名条目失败:', entry, e);
+    return null;
+  }
+}
+
+// 渲染用户端节点状态列表
+function renderUserNodeStatus(nodes) {
+  const tbody = document.getElementById('node-status-list-user');
+  
+  if (nodes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400 dark:text-zinc-600"><span class="material-symbols-outlined text-4xl mb-2 block">cloud_off</span><p class="text-sm">暂无节点状态数据</p></td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = nodes.map(node => {
+    const statusClass = node.status === '在线' 
+      ? 'border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400'
+      : 'border-red-200 dark:border-red-900 text-red-600 dark:text-red-400';
+    
+    return '<tr class="hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors">' +
+      '<td class="px-2 md:px-4 py-2 md:py-3 text-slate-500 dark:text-zinc-500 text-center text-xs md:text-sm">' + node.id + '</td>' +
+      '<td class="px-2 md:px-4 py-2 md:py-3 font-medium text-slate-900 dark:text-zinc-100 text-xs md:text-sm">' + node.name + '</td>' +
+      '<td class="px-2 md:px-4 py-2 md:py-3 font-mono text-[10px] md:text-xs text-slate-600 dark:text-zinc-400">' + node.node + '</td>' +
+      '<td class="px-2 md:px-4 py-2 md:py-3 text-right">' +
+        '<span class="inline-flex items-center rounded-full border ' + statusClass + ' px-1.5 md:px-2 py-0.5 text-[10px] md:text-xs font-medium">' + node.status + '</span>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
 }
 
 function showToast(message, type = 'info') {
@@ -1008,8 +1320,13 @@ async function handleCheckin() {
     const res = await fetch('/api/user/checkin', { method: 'POST' });
     const data = await res.json();
     if(res.ok && data.success) {
-      showToast('✅ ' + data.message);
-      setTimeout(() => location.reload(), 1500);
+      // 显示签到成功消息，包含奖励信息
+      if (data.milestone_reward > 0) {
+        showToast('🎉 ' + data.message);
+      } else {
+        showToast('✅ ' + data.message);
+      }
+      setTimeout(() => location.reload(), 2000);
     } else {
       // 如果是已签到，显示信息提示；其他情况显示错误
       const msg = data.error || '签到失败';

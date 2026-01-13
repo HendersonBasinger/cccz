@@ -130,6 +130,9 @@ app.get('/api/admin/best-domains', adminRoutes.getBestDomains);
 app.post('/api/admin/best-domains', adminRoutes.saveBestDomains);
 app.post('/api/admin/fetch-best-ips', adminRoutes.fetchBestIPs);
 
+// 用户端 - 获取最佳域名（用于节点状态显示）
+app.get('/api/best-domains', userRoutes.getBestDomains);
+
 // 高级管理功能
 app.post('/api/admin/change-password', adminRoutes.changeAdminPassword);
 app.get('/api/admin/export-all', adminRoutes.exportAllData);
@@ -203,7 +206,10 @@ async function getUserInfo(req) {
         lastLogin: user.last_login,
         expiry: uuidUser ? uuidUser.expiry : null,
         enabled: uuidUser ? uuidUser.enabled === 1 : false,
-        name: uuidUser ? uuidUser.name : user.username
+        name: uuidUser ? uuidUser.name : user.username,
+        last_checkin: user.last_checkin || 0,
+        checkin_streak: user.checkin_streak || 0,
+        total_checkin_days: user.total_checkin_days || 0
     };
 }
 
