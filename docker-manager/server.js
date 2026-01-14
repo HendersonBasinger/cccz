@@ -253,7 +253,7 @@ async function updateBestIPs() {
         const ipv6Data = await fetchBestIPsFromWeb('v6');
         
         if (ipv4Data.length === 0 && ipv6Data.length === 0) {
-            console.log('[定时任务] 未获取到优选IP数据');
+            console.log('[定时任务] 未获取到优选IP数据，保留现有数据');
             return;
         }
         
@@ -285,13 +285,15 @@ async function updateBestIPs() {
             newDataByLine[item.lineKey].push(item.entry);
         });
         
-        const allLineKeys = new Set([...Object.keys(newDataByLine), ...Object.keys(oldAutoDomains)]);
+        // ⚠️ 关键修复：必须包含所有旧线路，防止数据丢失
+        const allLineKeys = new Set([...Object.keys(oldAutoDomains), ...Object.keys(newDataByLine)]);
         
         allLineKeys.forEach(lineKey => {
             const newIPs = newDataByLine[lineKey] || [];
             const oldIPs = oldAutoDomains[lineKey] || [];
             
             if (newIPs.length > 0) {
+                // 有新IP：新IP优先，不足5个用旧IP补齐
                 const merged = [...newIPs.slice(0, 5)];
                 if (merged.length < 5) {
                     const need = 5 - merged.length;
@@ -303,10 +305,12 @@ async function updateBestIPs() {
                 }
                 newAutoDomains.push(...merged.slice(0, 5));
             } else {
+                // 没有新IP：完全保留旧IP（最多5个），防止数据丢失
                 newAutoDomains.push(...oldIPs.slice(0, 5));
             }
         });
         
+        // ⚠️ 关键修复：手动域名必须始终保留
         settings.bestDomains = [...manualDomains, ...newAutoDomains];
         db.saveSettings(settings);
         
@@ -314,6 +318,7 @@ async function updateBestIPs() {
         
     } catch (error) {
         console.error('[定时任务] 更新优选IP失败:', error.message);
+        // ⚠️ 关键修复：发生错误时不修改数据，避免清空
     }
 }
 

@@ -4669,12 +4669,14 @@ function renderAdminPanel() {
         return;
       }
       
-      // 去重并添加
+      // 去重并添加到列表开头（方便用户使用，无需拖动）
+      const addedDomains = [];
       newDomains.forEach(domain => {
         if (!currentBestDomains.includes(domain)) {
-          currentBestDomains.push(domain);
+          addedDomains.push(domain);
         }
       });
+      currentBestDomains.unshift(...addedDomains);
       
       document.getElementById('best-domains-batch-input').value = '';
       renderBestDomainsList();
@@ -4712,15 +4714,17 @@ function renderAdminPanel() {
         const result = await response.json();
         
         if (result.success) {
-          // 追加而不是替换，避免删除手动添加的域名
+          // 追加到列表开头，方便用户查看和使用
           const newDomains = result.domains || [];
+          const addedDomains = [];
           newDomains.forEach(domain => {
             if (!currentBestDomains.includes(domain)) {
-              currentBestDomains.push(domain);
+              addedDomains.push(domain);
             }
           });
+          currentBestDomains.unshift(...addedDomains);
           renderBestDomainsList();
-          showAlert('已获取 ' + newDomains.length + ' 个 IPv4 优选域名', 'success');
+          showAlert('已获取 ' + addedDomains.length + ' 个 IPv4 优选域名', 'success');
         } else {
           showAlert('获取失败: ' + (result.error || '未知错误'), 'error');
         }
@@ -4745,15 +4749,17 @@ function renderAdminPanel() {
         const result = await response.json();
         
         if (result.success) {
-          // 追加而不是替换，避免删除手动添加的域名
+          // 追加到列表开头，方便用户查看和使用
           const newDomains = result.domains || [];
+          const addedDomains = [];
           newDomains.forEach(domain => {
             if (!currentBestDomains.includes(domain)) {
-              currentBestDomains.push(domain);
+              addedDomains.push(domain);
             }
           });
+          currentBestDomains.unshift(...addedDomains);
           renderBestDomainsList();
-          showAlert('已获取 ' + newDomains.length + ' 个 IPv6 优选域名', 'success');
+          showAlert('已获取 ' + addedDomains.length + ' 个 IPv6 优选域名', 'success');
         } else {
           showAlert('获取失败: ' + (result.error || '未知错误'), 'error');
         }
