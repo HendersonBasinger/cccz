@@ -259,11 +259,57 @@ function verifyApiToken(req, res, next) {
     next();
 }
 
+// 获取活跃的 ProxyIP 列表（按地理区域分组，供节点端智能匹配）
+function getActiveProxyIPs(req, res) {
+    try {
+        const allProxies = db.getAllProxyIPsWithMeta();
+        const activeProxies = allProxies.filter(p => p.status === 'active');
+        
+        // 按地理区域分组
+        const proxyByRegion = {};
+        const REGIONS = ['HK', 'TW', 'JP', 'SG', 'US', 'KR', 'DE', 'UK', 'FR', 'NL'];
+        
+        REGIONS.forEach(region => {
+            proxyByRegion[region] = [];
+        });
+        proxyByRegion['OTHER'] = [];
+        
+        activeProxies.forEach(proxy => {
+            const region = proxy.region || 'OTHER';
+            const proxyAddr = proxy.port === 443 
+                ? proxy.address 
+                : `${proxy.address}:${proxy.port}`;
+            
+            if (proxyByRegion[region]) {
+                proxyByRegion[region].push(proxyAddr);
+            } else {
+                proxyByRegion['OTHER'].push(proxyAddr);
+            }
+        });
+        
+        // 返回分组后的 ProxyIP 列表
+        res.json({
+            success: true,
+            proxyIPs: proxyByRegion,
+            totalActive: activeProxies.length,
+            lastUpdate: Date.now()
+        });
+        
+    } catch (error) {
+        console.error('[API] 获取 ProxyIP 失败:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 module.exports = {
     verifyApiToken,
     getUsers,
     getAnnouncement,
     getPlans,
     getPaymentChannels,
-    paymentNotify
+    paymentNotify,
+    getActiveProxyIPs
 };

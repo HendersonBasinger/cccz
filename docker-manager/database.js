@@ -124,6 +124,30 @@ function initDatabase() {
             enabled INTEGER NOT NULL DEFAULT 1,
             created_at INTEGER NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS proxy_ips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            address TEXT NOT NULL,
+            port INTEGER NOT NULL DEFAULT 443,
+            region TEXT,
+            country TEXT,
+            isp TEXT,
+            city TEXT,
+            latitude REAL,
+            longitude REAL,
+            response_time INTEGER DEFAULT -1,
+            status TEXT NOT NULL DEFAULT 'pending',
+            last_check_at INTEGER,
+            fail_count INTEGER DEFAULT 0,
+            success_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            UNIQUE(address, port)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_proxy_ips_status ON proxy_ips(status);
+        CREATE INDEX IF NOT EXISTS idx_proxy_ips_region ON proxy_ips(region);
+        CREATE INDEX IF NOT EXISTS idx_proxy_ips_response_time ON proxy_ips(response_time);
     `);
     
     // 数据库迁移：检查并添加缺失的字段
@@ -228,6 +252,45 @@ function initDatabase() {
         }
     } catch (e) {
         console.error('[数据库迁移] 错误:', e.message);
+    }
+    
+    // 迁移：创建 proxy_ips 表
+    try {
+        const proxyIpsTableExists = db.prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='proxy_ips'"
+        ).get();
+        
+        if (!proxyIpsTableExists) {
+            console.log('[数据库迁移] 创建 proxy_ips 表...');
+            db.exec(`
+                CREATE TABLE proxy_ips (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    address TEXT NOT NULL,
+                    port INTEGER NOT NULL DEFAULT 443,
+                    region TEXT,
+                    country TEXT,
+                    isp TEXT,
+                    city TEXT,
+                    latitude REAL,
+                    longitude REAL,
+                    response_time INTEGER DEFAULT -1,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    last_check_at INTEGER,
+                    fail_count INTEGER DEFAULT 0,
+                    success_count INTEGER DEFAULT 0,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL,
+                    UNIQUE(address, port)
+                );
+                
+                CREATE INDEX idx_proxy_ips_status ON proxy_ips(status);
+                CREATE INDEX idx_proxy_ips_region ON proxy_ips(region);
+                CREATE INDEX idx_proxy_ips_response_time ON proxy_ips(response_time);
+            `);
+            console.log('[数据库迁移] ✅ proxy_ips 表创建成功');
+        }
+    } catch (e) {
+        console.error('[数据库迁移] proxy_ips 表创建错误:', e.message);
     }
     
     console.log('[数据库] 初始化完成');
@@ -890,6 +953,161 @@ function saveBestDomains(bestDomains) {
     return saveSettings(settings);
 }
 
+// ==================== ProxyIP 智能管理 ====================
+
+// 添加 ProxyIP
+function addProxyIP(address, port = 443) {
+    const now = Date.now();
+    try {
+        const stmt = getDb().prepare(`
+            INSERT INTO proxy_ips (address, port, status, created_at, updated_at)
+            VALUES (?, ?, 'pending', ?, ?)
+        `);
+        return stmt.run(address, port, now, now);
+    } catch (e) {
+        if (e.message.includes('UNIQUE')) {
+            // 已存在，返回现有记录
+            const existing = getDb().prepare(
+                'SELECT * FROM proxy_ips WHERE address = ? AND port = ?'
+            ).get(address, port);
+            return existing;
+        }
+        throw e;
+    }
+}
+
+// 获取所有 ProxyIP（带元数据）
+function getAllProxyIPsWithMeta() {
+    const stmt = getDb().prepare(`
+        SELECT * FROM proxy_ips 
+        ORDER BY 
+            CASE status 
+                WHEN 'active' THEN 1 
+                WHEN 'pending' THEN 2 
+                ELSE 3 
+            END,
+            response_time ASC,
+            created_at DESC
+    `);
+    return stmt.all();
+}
+
+// 根据地区获取活跃的 ProxyIP
+function getActiveProxyIPsByRegion(region = null) {
+    if (region) {
+        const stmt = getDb().prepare(`
+            SELECT * FROM proxy_ips 
+            WHERE status = 'active' AND region = ?
+            ORDER BY response_time ASC, success_count DESC
+            LIMIT 10
+        `);
+        return stmt.all(region);
+    } else {
+        const stmt = getDb().prepare(`
+            SELECT * FROM proxy_ips 
+            WHERE status = 'active'
+            ORDER BY response_time ASC, success_count DESC
+            LIMIT 20
+        `);
+        return stmt.all();
+    }
+}
+
+// 更新 ProxyIP 状态
+function updateProxyIPStatus(id, statusData) {
+    const now = Date.now();
+    const { status, region, country, isp, city, latitude, longitude, responseTime } = statusData;
+    
+    // 获取当前记录
+    const current = getDb().prepare('SELECT * FROM proxy_ips WHERE id = ?').get(id);
+    if (!current) return null;
+    
+    const newFailCount = status === 'active' ? 0 : (current.fail_count || 0) + 1;
+    const newSuccessCount = status === 'active' ? (current.success_count || 0) + 1 : current.success_count;
+    
+    const stmt = getDb().prepare(`
+        UPDATE proxy_ips 
+        SET status = ?,
+            region = ?,
+            country = ?,
+            isp = ?,
+            city = ?,
+            latitude = ?,
+            longitude = ?,
+            response_time = ?,
+            last_check_at = ?,
+            fail_count = ?,
+            success_count = ?,
+            updated_at = ?
+        WHERE id = ?
+    `);
+    
+    return stmt.run(
+        status,
+        region || current.region,
+        country || current.country,
+        isp || current.isp,
+        city || current.city,
+        latitude || current.latitude,
+        longitude || current.longitude,
+        responseTime >= 0 ? responseTime : current.response_time,
+        now,
+        newFailCount,
+        newSuccessCount,
+        now,
+        id
+    );
+}
+
+// 删除 ProxyIP
+function removeProxyIP(id) {
+    const stmt = getDb().prepare('DELETE FROM proxy_ips WHERE id = ?');
+    return stmt.run(id);
+}
+
+// 检查 ProxyIP 是否已存在
+function checkProxyIPExists(address, port) {
+    const stmt = getDb().prepare('SELECT id FROM proxy_ips WHERE address = ? AND port = ?');
+    return stmt.get(address, port);
+}
+
+// 获取 ProxyIP 统计信息
+function getProxyIPStats() {
+    const stats = {};
+    
+    // 总数
+    stats.total = getDb().prepare('SELECT COUNT(*) as count FROM proxy_ips').get().count;
+    
+    // 活跃数
+    stats.active = getDb().prepare("SELECT COUNT(*) as count FROM proxy_ips WHERE status = 'active'").get().count;
+    
+    // 待检测
+    stats.pending = getDb().prepare("SELECT COUNT(*) as count FROM proxy_ips WHERE status = 'pending'").get().count;
+    
+    // 失效
+    stats.failed = getDb().prepare("SELECT COUNT(*) as count FROM proxy_ips WHERE status = 'failed'").get().count;
+    
+    // 按地区分组
+    stats.byRegion = getDb().prepare(`
+        SELECT region, COUNT(*) as count 
+        FROM proxy_ips 
+        WHERE status = 'active' AND region IS NOT NULL
+        GROUP BY region
+        ORDER BY count DESC
+    `).all();
+    
+    return stats;
+}
+
+// 清理失效的 ProxyIP（连续失败超过阈值）
+function cleanInactiveProxyIPs(failThreshold = 5) {
+    const stmt = getDb().prepare(`
+        DELETE FROM proxy_ips 
+        WHERE fail_count >= ? AND status = 'failed'
+    `);
+    return stmt.run(failThreshold);
+}
+
 // ==================== 日志管理 ====================
 function addLog(action, details = '', level = 'info') {
     const settings = getSettings();
@@ -1184,6 +1402,16 @@ module.exports = {
     saveProxyIPs,
     getBestDomains,
     saveBestDomains,
+    
+    // ProxyIP 智能管理
+    addProxyIP,
+    getAllProxyIPsWithMeta,
+    getActiveProxyIPsByRegion,
+    updateProxyIPStatus,
+    removeProxyIP,
+    checkProxyIPExists,
+    getProxyIPStats,
+    cleanInactiveProxyIPs,
     
     // 日志
     addLog,

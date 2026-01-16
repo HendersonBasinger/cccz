@@ -40,6 +40,7 @@ app.use((req, res, next) => {
 
 // API 路由 - 供节点端拉取（需要密钥验证）
 app.get('/api/users', apiRoutes.verifyApiToken, apiRoutes.getUsers);
+app.get('/api/proxyips/active', apiRoutes.verifyApiToken, apiRoutes.getActiveProxyIPs);
 
 // 公告 API
 app.get('/api/announcement', apiRoutes.getAnnouncement);
@@ -129,6 +130,13 @@ app.post('/api/admin/proxy-ips', adminRoutes.saveProxyIPs);
 app.get('/api/admin/best-domains', adminRoutes.getBestDomains);
 app.post('/api/admin/best-domains', adminRoutes.saveBestDomains);
 app.post('/api/admin/fetch-best-ips', adminRoutes.fetchBestIPs);
+
+// ProxyIP 智能管理
+app.get('/api/admin/proxyips/meta', adminRoutes.getAllProxyIPsWithMeta);
+app.post('/api/admin/proxyips/add', adminRoutes.addProxyIPs);
+app.post('/api/admin/proxyips/check', adminRoutes.checkProxyIPs);
+app.post('/api/admin/proxyips/delete', adminRoutes.deleteProxyIP);
+app.post('/api/admin/proxyips/clean', adminRoutes.cleanInactiveProxyIPs);
 
 // 用户端 - 获取最佳域名（用于节点状态显示）
 app.get('/api/best-domains', userRoutes.getBestDomains);
@@ -238,6 +246,66 @@ cron.schedule('*/15 * * * *', async () => {
         
         // 清理过期会话
         db.cleanExpiredSessions();
+        
+        // 自动检测 ProxyIP（每次检测 pending 和少量失败的 IP）
+        try {
+            const checker = require('./proxyip-checker');
+            const allProxies = db.getAllProxyIPsWithMeta();
+            
+            // 优先检测 pending 状态，然后是失败次数较少的
+            const pendingProxies = allProxies.filter(p => p.status === 'pending' || (p.status === 'failed' && p.fail_count < 3));
+            
+            if (pendingProxies.length > 0) {
+                console.log(`[定时任务] 开始检测 ${pendingProxies.length} 个 ProxyIP...`);
+                
+                // 每次最多检测 20 个，避免耗时过长
+                const toCheck = pendingProxies.slice(0, 20);
+                
+                // 异步检测，不阻塞主流程
+                setImmediate(async () => {
+                    try {
+                        const results = await checker.batchCheckProxyIPs(toCheck.map(p => ({ address: p.address, port: p.port })));
+                        
+                        let activeCount = 0;
+                        let failedCount = 0;
+                        
+                        results.forEach(result => {
+                            if (result.success) {
+                                db.updateProxyIPStatus(result.address, result.port, {
+                                    status: result.status,
+                                    responseTime: result.responseTime,
+                                    region: result.region,
+                                    country: result.country,
+                                    isp: result.isp,
+                                    city: result.city,
+                                    latitude: result.latitude,
+                                    longitude: result.longitude
+                                });
+                                if (result.status === 'active') activeCount++;
+                            } else {
+                                db.updateProxyIPStatus(result.address, result.port, {
+                                    status: 'failed'
+                                });
+                                failedCount++;
+                            }
+                        });
+                        
+                        console.log(`[定时任务] ProxyIP 检测完成: 成功 ${activeCount} 个, 失败 ${failedCount} 个`);
+                        
+                        // 清理失败次数超过 5 次的 IP
+                        const cleanedCount = db.cleanInactiveProxyIPs(5);
+                        if (cleanedCount > 0) {
+                            console.log(`[定时任务] 已清理 ${cleanedCount} 个失效 ProxyIP`);
+                        }
+                        
+                    } catch (error) {
+                        console.error('[定时任务] ProxyIP 检测失败:', error.message);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('[定时任务] ProxyIP 检测模块加载失败:', error.message);
+        }
         
     } catch (error) {
         console.error('[定时任务] 执行失败:', error.message);

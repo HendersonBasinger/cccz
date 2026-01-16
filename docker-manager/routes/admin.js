@@ -1370,6 +1370,187 @@ async function fetchBestIPs(req, res) {
     }
 }
 
+// ==================== ProxyIP 智能管理 ====================
+
+// 获取所有 ProxyIP（带元数据）
+function getAllProxyIPsWithMeta(req, res) {
+    try {
+        const proxyIPs = db.getAllProxyIPsWithMeta();
+        const stats = db.getProxyIPStats();
+        res.json({ success: true, proxyIPs, stats });
+    } catch (e) {
+        console.error('获取 ProxyIP 列表失败:', e);
+        res.status(500).json({ error: e.message });
+    }
+}
+
+// 批量添加 ProxyIP
+async function addProxyIPs(req, res) {
+    try {
+        const { proxyIPs } = req.body;
+        
+        if (!Array.isArray(proxyIPs) || proxyIPs.length === 0) {
+            return res.status(400).json({ error: '无效的数据格式' });
+        }
+        
+        const results = [];
+        const errors = [];
+        
+        for (const item of proxyIPs) {
+            try {
+                // 解析地址和端口
+                let address, port = 443;
+                
+                if (typeof item === 'string') {
+                    const parts = item.split(':');
+                    address = parts[0];
+                    if (parts.length > 1) {
+                        const portPart = parts[parts.length - 1].split('#')[0];
+                        port = parseInt(portPart) || 443;
+                    }
+                } else if (typeof item === 'object') {
+                    address = item.address;
+                    port = item.port || 443;
+                }
+                
+                // 检查是否已存在
+                const exists = db.checkProxyIPExists(address, port);
+                if (exists) {
+                    results.push({ address, port, status: 'exists' });
+                    continue;
+                }
+                
+                // 添加到数据库
+                db.addProxyIP(address, port);
+                results.push({ address, port, status: 'added' });
+                
+            } catch (e) {
+                errors.push({ item, error: e.message });
+            }
+        }
+        
+        res.json({ 
+            success: true, 
+            results,
+            errors,
+            total: proxyIPs.length,
+            added: results.filter(r => r.status === 'added').length,
+            exists: results.filter(r => r.status === 'exists').length
+        });
+        
+    } catch (e) {
+        console.error('批量添加 ProxyIP 失败:', e);
+        res.status(500).json({ error: e.message });
+    }
+}
+
+// 检测 ProxyIP
+async function checkProxyIPs(req, res) {
+    try {
+        const { ids } = req.body; // 要检测的 ProxyIP ID数组，如果为空则检测所有pending状态的
+        
+        const checker = require('../proxyip-checker');
+        let proxyList;
+        
+        if (ids && ids.length > 0) {
+            // 检测指定的 ProxyIP
+            const allProxies = db.getAllProxyIPsWithMeta();
+            proxyList = allProxies.filter(p => ids.includes(p.id));
+        } else {
+            // 检测所有 pending 或失败次数少的
+            const allProxies = db.getAllProxyIPsWithMeta();
+            proxyList = allProxies.filter(p => 
+                p.status === 'pending' || 
+                (p.status === 'failed' && p.fail_count < 3)
+            );
+        }
+        
+        if (proxyList.length === 0) {
+            return res.json({ success: true, message: '没有需要检测的 ProxyIP', checked: 0 });
+        }
+        
+        // 启动异步检测（不阻塞响应）
+        setImmediate(async () => {
+            console.log(`🔍 开始检测 ${proxyList.length} 个 ProxyIP...`);
+            
+            for (const proxy of proxyList) {
+                try {
+                    const result = await checker.checkProxyIP(proxy.address, proxy.port);
+                    
+                    db.updateProxyIPStatus(proxy.id, {
+                        status: result.success ? 'active' : 'failed',
+                        region: result.region,
+                        country: result.country,
+                        isp: result.isp,
+                        city: result.city,
+                        latitude: result.latitude,
+                        longitude: result.longitude,
+                        responseTime: result.responseTime
+                    });
+                    
+                    console.log(`${result.success ? '✅' : '❌'} ${proxy.address}:${proxy.port} - ${result.success ? result.responseTime + 'ms' : result.error}`);
+                    
+                } catch (e) {
+                    console.error(`检测失败 ${proxy.address}:${proxy.port}:`, e.message);
+                    db.updateProxyIPStatus(proxy.id, {
+                        status: 'failed',
+                        responseTime: -1
+                    });
+                }
+            }
+            
+            console.log(`✅ ProxyIP 检测完成`);
+        });
+        
+        res.json({ 
+            success: true, 
+            message: '检测任务已启动',
+            checking: proxyList.length
+        });
+        
+    } catch (e) {
+        console.error('检测 ProxyIP 失败:', e);
+        res.status(500).json({ error: e.message });
+    }
+}
+
+// 删除 ProxyIP
+function deleteProxyIP(req, res) {
+    try {
+        const { id } = req.body;
+        
+        if (!id) {
+            return res.status(400).json({ error: '缺少 ID 参数' });
+        }
+        
+        db.removeProxyIP(id);
+        res.json({ success: true });
+        
+    } catch (e) {
+        console.error('删除 ProxyIP 失败:', e);
+        res.status(500).json({ error: e.message });
+    }
+}
+
+// 清理失效的 ProxyIP
+function cleanInactiveProxyIPs(req, res) {
+    try {
+        const { failThreshold = 5 } = req.body;
+        
+        const result = db.cleanInactiveProxyIPs(failThreshold);
+        
+        res.json({ 
+            success: true, 
+            removed: result.changes,
+            message: `已清理 ${result.changes} 个失效的 ProxyIP`
+        });
+        
+    } catch (e) {
+        console.error('清理失效 ProxyIP 失败:', e);
+        res.status(500).json({ error: e.message });
+    }
+}
+
 
 // ==================== 修改密码 ====================
 async function changeAdminPassword(req, res) {
@@ -1540,6 +1721,11 @@ module.exports = {
     getBestDomains,
     saveBestDomains,
     fetchBestIPs,
+    getAllProxyIPsWithMeta,
+    addProxyIPs,
+    checkProxyIPs,
+    deleteProxyIP,
+    cleanInactiveProxyIPs,
     changeAdminPassword,
     exportAllData,
     importAllData,

@@ -1026,49 +1026,103 @@ function renderAdminPanel() {
             
             <hr class="border-slate-200 dark:border-zinc-800"/>
             
-            <!-- 反代IP列表部分 -->
+            <!-- ProxyIP 智能管理面板 -->
             <section class="space-y-6">
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold tracking-tight">默认反代 IP 列表</h2>
-                <span id="proxy-ips-count" class="text-sm text-slate-500 dark:text-zinc-400">已配置 0 个</span>
-              </div>
-              
-              <div class="rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/30 p-4 mb-6">
-                <div class="flex items-start gap-3">
-                  <span class="material-symbols-outlined text-primary dark:text-zinc-400 mt-0.5">info</span>
-                  <p class="text-sm text-slate-600 dark:text-zinc-300 leading-relaxed">
-                    <span class="font-semibold text-primary dark:text-zinc-100">温馨提示:</span> 在代理地址中包含地区标识符 (如 HK/JP/US/SG)，系统会自动选择地区代理以提高速度。
-                  </p>
-                </div>
-              </div>
-              
-              <div class="flex flex-col gap-4">
-                <div class="flex gap-2">
-                  <textarea id="proxy-ips-batch-input" class="flex min-h-[120px] w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300 transition-all" placeholder="批量添加，每行一个。支持地理标签。例如：\nProxyIP.HK.CMLiusss.net:443\nsjc.o00o.ooo:443\nkr.william.us.ci:443"></textarea>
-                  <button onclick="batchAddProxyIPs()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 bg-primary dark:bg-white text-white dark:text-black hover:bg-primary/90 dark:hover:bg-zinc-100 h-10 px-4 py-2 self-start">
-                    添加
+                <h2 class="text-lg font-semibold tracking-tight">ProxyIP 智能管理</h2>
+                <div class="flex items-center gap-2">
+                  <button onclick="refreshProxyIPStats()" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs rounded-md border border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">refresh</span>
+                    刷新统计
                   </button>
                 </div>
-                
-                <div id="proxy-ips-list" class="rounded-md border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-950">
-                  <div class="divide-y divide-slate-200 dark:divide-zinc-800">
-                    <div class="p-8 text-center text-slate-400 dark:text-zinc-600">
-                      <span class="material-symbols-outlined text-4xl mb-2">cloud_off</span>
-                      <p class="text-sm">暂无反代 IP</p>
-                    </div>
+              </div>
+              
+              <!-- 统计卡片 -->
+              <div class="grid grid-cols-4 gap-4">
+                <div class="p-4 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-slate-500 dark:text-zinc-400">总数</span>
+                    <span class="material-symbols-outlined text-slate-400 dark:text-zinc-500 text-[18px]">language</span>
                   </div>
+                  <div class="text-2xl font-bold" id="stat-total-proxies">0</div>
                 </div>
+                
+                <div class="p-4 rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/30">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">活跃</span>
+                    <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+                  </div>
+                  <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" id="stat-active-proxies">0</div>
+                </div>
+                
+                <div class="p-4 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-amber-600 dark:text-amber-400">待检测</span>
+                    <span class="material-symbols-outlined text-amber-500 text-[18px]">hourglass_empty</span>
+                  </div>
+                  <div class="text-2xl font-bold text-amber-600 dark:text-amber-400" id="stat-pending-proxies">0</div>
+                </div>
+                
+                <div class="p-4 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-red-600 dark:text-red-400">失败</span>
+                    <span class="material-symbols-outlined text-red-500 text-[18px]">error</span>
+                  </div>
+                  <div class="text-2xl font-bold text-red-600 dark:text-red-400" id="stat-failed-proxies">0</div>
+                </div>
+              </div>
+              
+              <!-- 操作按钮组 -->
+              <div class="flex gap-3">
+                <button onclick="checkAllProxyIPs()" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary dark:bg-white text-white dark:text-black hover:bg-primary/90 dark:hover:bg-zinc-100 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">network_check</span>
+                  检测所有 ProxyIP
+                </button>
+                <button onclick="cleanInactiveProxyIPs()" class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+                  清理失效 IP
+                </button>
+              </div>
+              
+              <!-- ProxyIP 列表表格 -->
+              <div class="rounded-lg border border-slate-200 dark:border-zinc-800 overflow-hidden bg-white dark:bg-zinc-950">
+                <table class="w-full text-sm">
+                  <thead class="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
+                    <tr>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">地址</th>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">地区</th>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">状态</th>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">响应时间</th>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">成功/失败</th>
+                      <th class="px-4 py-3 text-left font-medium text-slate-600 dark:text-zinc-400">最后检测</th>
+                      <th class="px-4 py-3 text-right font-medium text-slate-600 dark:text-zinc-400">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="proxyip-table-body" class="divide-y divide-slate-200 dark:divide-zinc-800">
+                    <tr>
+                      <td colspan="7" class="p-8 text-center text-slate-400 dark:text-zinc-600">
+                        <span class="material-symbols-outlined text-4xl mb-2">cloud_off</span>
+                        <p class="text-sm">暂无 ProxyIP</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- 批量添加区域 -->
+              <div class="space-y-3">
+                <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">批量添加 ProxyIP</label>
+                <textarea id="batch-proxyip-input" class="flex min-h-[100px] w-full rounded-md border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 dark:ring-offset-zinc-950 dark:focus-visible:ring-zinc-300 transition-all" placeholder="每行一个，格式：IP:端口 或 域名:端口\n例如：\n192.168.1.1:443\nproxy.example.com:8443"></textarea>
+                <button onclick="batchAddSmartProxyIPs()" class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary dark:bg-white text-white dark:text-black hover:bg-primary/90 dark:hover:bg-zinc-100 transition-colors">
+                  <span class="material-symbols-outlined text-[18px]">add</span>
+                  批量添加并检测
+                </button>
               </div>
             </section>
             
-            <div class="pt-6 border-t border-slate-200 dark:border-zinc-800 flex justify-end gap-3">
-              <button onclick="loadProxyIPSettings()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-slate-50 dark:hover:bg-zinc-900 h-11 px-6">
-                重置
-              </button>
-              <button onclick="saveAllProxyIPSettings()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors bg-primary dark:bg-white text-white dark:text-black hover:bg-primary/90 dark:hover:bg-zinc-100 h-11 px-8">
-                保存配置
-              </button>
-            </div>
+            <!-- 旧的默认反代IP列表已合并到智能管理中 -->
+            
           </div>
         </div>
         
@@ -1525,7 +1579,11 @@ function renderAdminPanel() {
       
       // 切换到对应页面时加载数据
       if (sectionName === 'users') loadAllUsers();
-      if (sectionName === 'proxy-ips') loadProxyIPSettings();
+      if (sectionName === 'proxy-ips') {
+        loadProxyIPSettings();
+        refreshProxyIPStats();
+        importLegacyProxyIPs(); // 导入旧的ProxyIP列表
+      }
       if (sectionName === 'best-domains') loadBestDomains();
       if (sectionName === 'plans') loadAllPlans();
       if (sectionName === 'orders') loadAllOrders();
@@ -2729,12 +2787,10 @@ function renderAdminPanel() {
       }
     }
     
-    // ========== 反代IP功能 ==========
-    let currentProxyIPs = [];
-    
+    // ========== 订阅设置功能 ==========
     async function loadProxyIPSettings() {
       try {
-        // 加载系统设置
+        // 加载系统设置（仅订阅部分）
         const settingsResponse = await fetch('/api/admin/getSystemSettings');
         const settingsData = await settingsResponse.json();
         
@@ -2743,72 +2799,10 @@ function renderAdminPanel() {
           document.getElementById('sub-url').value = settings.subUrl || '';
           document.getElementById('website-url').value = settings.websiteUrl || '';
         }
-        
-        // 加载反代IP列表
-        const response = await fetch('/api/admin/proxy-ips');
-        if (!response.ok) throw new Error('Failed to fetch proxy IPs');
-        
-        const data = await response.json();
-        currentProxyIPs = data.proxyIPs || [];
-        
-        renderProxyIPList();
       } catch (error) {
-        console.error('加载反代IP设置失败:', error);
+        console.error('加载订阅设置失败:', error);
         showAlert('加载失败: ' + error.message, 'error');
       }
-    }
-    
-    function renderProxyIPList() {
-      const listContainer = document.getElementById('proxy-ips-list');
-      document.getElementById('proxy-ips-count').textContent = '已配置 ' + currentProxyIPs.length + ' 个';
-      
-      if (currentProxyIPs.length === 0) {
-        listContainer.innerHTML = '<div class="divide-y divide-slate-200 dark:divide-zinc-800"><div class="p-8 text-center text-slate-400 dark:text-zinc-600"><span class="material-symbols-outlined text-4xl mb-2">cloud_off</span><p class="text-sm">暂无反代 IP</p></div></div>';
-        return;
-      }
-      
-      let html = '<div class="divide-y divide-slate-200 dark:divide-zinc-800">';
-      currentProxyIPs.forEach((ip, index) => {
-        html += '<div class="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors">' +
-          '<div class="flex items-center gap-4">' +
-            '<span class="material-symbols-outlined text-slate-400 dark:text-zinc-600 cursor-move">drag_indicator</span>' +
-            '<code class="text-sm font-mono text-slate-700 dark:text-zinc-300">' + ip + '</code>' +
-          '</div>' +
-          '<button onclick="deleteProxyIP(' + index + ')" class="text-slate-400 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors">' +
-            '<span class="material-symbols-outlined">delete</span>' +
-          '</button>' +
-        '</div>';
-      });
-      html += '</div>';
-      listContainer.innerHTML = html;
-    }
-    
-    function batchAddProxyIPs() {
-      const input = document.getElementById('proxy-ips-batch-input').value;
-      const newIPs = input.split('\\n').map(line => line.trim()).filter(line => line);
-      
-      if (newIPs.length === 0) {
-        showAlert('请输入要添加的反代 IP', 'warning');
-        return;
-      }
-      
-      // 去重并添加
-      newIPs.forEach(ip => {
-        if (!currentProxyIPs.includes(ip)) {
-          currentProxyIPs.push(ip);
-        }
-      });
-      
-      document.getElementById('proxy-ips-batch-input').value = '';
-      renderProxyIPList();
-      showAlert('已添加 ' + newIPs.length + ' 个反代 IP', 'success');
-    }
-    
-    async function deleteProxyIP(index) {
-      const confirmed = await showConfirm('确定要删除该反代 IP 吗？', '删除反代IP');
-      if (!confirmed) return;
-      currentProxyIPs.splice(index, 1);
-      renderProxyIPList();
     }
     
     async function saveAllProxyIPSettings() {
@@ -2816,42 +2810,425 @@ function renderAdminPanel() {
         const subUrl = document.getElementById('sub-url').value.trim();
         const websiteUrl = document.getElementById('website-url').value.trim();
         
-        // 保存系统设置（不包含 bestDomains 字段，让后端保留原有值）
+        // 仅保存订阅设置，ProxyIP由智能管理自动同步
         const settingsResponse = await fetch('/api/admin/saveSettings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            subUrl, 
-            websiteUrl,
-            proxyIP: currentProxyIPs.join('\\n')
-            // 不发送 bestDomains 字段，后端会自动保留原有值
-          })
+          body: JSON.stringify({ subUrl, websiteUrl })
         });
         
         const settingsResult = await settingsResponse.json();
-        if (!settingsResult.success) {
-          throw new Error(settingsResult.error || '保存系统设置失败');
-        }
-        
-        // 保存反代IP列表
-        const proxyResponse = await fetch('/api/admin/proxy-ips', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ proxyIPs: currentProxyIPs })
-        });
-        
-        const proxyResult = await proxyResponse.json();
-        
-        if (proxyResult.success) {
-          showAlert('保存成功\\n\\n' + 
-            '订阅地址: ' + (subUrl || '未设置') + '\\n' +
-            '官网地址: ' + (websiteUrl || '未设置') + '\\n' +
-            '反代 IP: ' + currentProxyIPs.length + ' 个', 'success');
+        if (settingsResult.success) {
+          showAlert('订阅设置保存成功', 'success');
         } else {
-          showAlert('保存失败: ' + (proxyResult.error || '未知错误'), 'error');
+          throw new Error(settingsResult.error || '保存订阅设置失败');
         }
       } catch (error) {
         showAlert('保存失败: ' + error.message, 'error');
+      }
+    }
+    
+    // ========== ProxyIP 智能管理功能 ==========
+    
+    // 从旧的settings.proxyIP导入到智能管理系统（只执行一次）
+    async function importLegacyProxyIPs() {
+      try {
+        // 检查是否已经导入过
+        const imported = localStorage.getItem('proxyIPsImported');
+        if (imported === 'true') return;
+        
+        // 获取旧的ProxyIP列表
+        const response = await fetch('/api/admin/proxy-ips');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const legacyIPs = data.proxyIPs || [];
+        
+        if (legacyIPs.length === 0) {
+          localStorage.setItem('proxyIPsImported', 'true');
+          return;
+        }
+        
+        // 解析并导入
+        const proxies = [];
+        for (const ip of legacyIPs) {
+          const parts = ip.split(':');
+          if (parts.length >= 1) {
+            const address = parts[0].trim();
+            const port = parts.length > 1 ? parseInt(parts[1].trim()) : 443;
+            if (address && !isNaN(port)) {
+              proxies.push({ address, port });
+            }
+          }
+        }
+        
+        if (proxies.length > 0) {
+          // 批量导入
+          const addResponse = await fetch('/api/admin/proxyips/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proxyIPs: proxies })
+          });
+          
+          const result = await addResponse.json();
+          if (result.success && result.added > 0) {
+            console.log('[导入] 成功导入 ' + result.added + ' 个旧的 ProxyIP');
+            
+            // 触发检测
+            await fetch('/api/admin/proxyips/check', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({})
+            });
+            
+            // 启动轮询，实时更新表格
+            startCheckingPolling();
+          }
+        }
+        
+        // 标记已导入
+        localStorage.setItem('proxyIPsImported', 'true');
+        
+      } catch (error) {
+        console.error('导入旧ProxyIP失败:', error);
+      }
+    }
+    
+    // 自动同步活跃ProxyIP到settings（保持向后兼容）
+    async function syncActiveProxyIPsToSettings() {
+      try {
+        const response = await fetch('/api/admin/proxyips/meta');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data.success) {
+          const proxies = data.proxies || [];
+          const activeProxies = proxies.filter(p => p.status === 'active');
+          
+          // 构建ProxyIP列表字符串
+          const proxyIPList = activeProxies.map(p => {
+            return p.port === 443 ? p.address : (p.address + ':' + p.port);
+          }).join('\\n');
+          
+          // 静默保存到settings（不影响其他字段）
+          await fetch('/api/admin/saveSettings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              proxyIP: proxyIPList,
+              _syncOnly: true  // 标记为仅同步操作
+            })
+          });
+        }
+      } catch (error) {
+        console.error('同步ProxyIP到settings失败:', error);
+        // 静默失败，不影响用户体验
+      }
+    }
+    
+    async function refreshProxyIPStats() {
+      try {
+        const response = await fetch('/api/admin/proxyips/meta');
+        if (!response.ok) throw new Error('Failed to fetch ProxyIP stats');
+        
+        const data = await response.json();
+        if (data.success) {
+          const proxies = data.proxies || [];
+          const stats = data.stats || {};
+          
+          // 更新统计数据
+          document.getElementById('stat-total-proxies').textContent = stats.total || 0;
+          document.getElementById('stat-active-proxies').textContent = stats.active || 0;
+          document.getElementById('stat-pending-proxies').textContent = stats.pending || 0;
+          document.getElementById('stat-failed-proxies').textContent = stats.failed || 0;
+          
+          // 渲染表格
+          renderProxyIPTable(proxies);
+          
+          // 自动同步活跃IP到settings
+          syncActiveProxyIPsToSettings();
+        } else {
+          showAlert('加载失败: ' + (data.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        console.error('刷新 ProxyIP 统计失败:', error);
+        showAlert('刷新失败: ' + error.message, 'error');
+      }
+    }
+    
+    function renderProxyIPTable(proxies) {
+      const tbody = document.getElementById('proxyip-table-body');
+      
+      if (!proxies || proxies.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-slate-400 dark:text-zinc-600"><span class="material-symbols-outlined text-4xl mb-2">cloud_off</span><p class="text-sm">暂无 ProxyIP</p></td></tr>';
+        return;
+      }
+      
+      let html = '';
+      proxies.forEach(proxy => {
+        const statusBadge = getStatusBadge(proxy.status);
+        const regionBadge = getRegionBadge(proxy.region, proxy.country);
+        const timeAgo = proxy.last_check_at ? formatTimeAgo(proxy.last_check_at) : '-';
+        const responseTime = proxy.response_time ? proxy.response_time + ' ms' : '-';
+        
+        html += '<tr class="hover:bg-slate-50 dark:hover:bg-zinc-900/50 transition-colors">' +
+          '<td class="px-4 py-3">' +
+            '<code class="text-xs font-mono">' + proxy.address + (proxy.port !== 443 ? ':' + proxy.port : '') + '</code>' +
+            (proxy.isp ? '<br><span class="text-xs text-slate-500 dark:text-zinc-500">' + proxy.isp + '</span>' : '') +
+          '</td>' +
+          '<td class="px-4 py-3">' + regionBadge + '</td>' +
+          '<td class="px-4 py-3">' + statusBadge + '</td>' +
+          '<td class="px-4 py-3"><span class="text-xs font-mono">' + responseTime + '</span></td>' +
+          '<td class="px-4 py-3">' +
+            '<span class="text-xs text-emerald-600 dark:text-emerald-400">' + (proxy.success_count || 0) + '</span>' +
+            '<span class="text-slate-400 dark:text-zinc-600">/</span>' +
+            '<span class="text-xs text-red-600 dark:text-red-400">' + (proxy.fail_count || 0) + '</span>' +
+          '</td>' +
+          '<td class="px-4 py-3"><span class="text-xs text-slate-500 dark:text-zinc-500">' + timeAgo + '</span></td>' +
+          '<td class="px-4 py-3 text-right">' +
+            '<div class="flex items-center justify-end gap-2">' +
+              '<button onclick="checkSingleProxyIP(&quot;' + proxy.address + '&quot;, ' + proxy.port + ')" class="text-slate-400 hover:text-primary dark:text-zinc-600 dark:hover:text-zinc-300 transition-colors" title="检测">' +
+                '<span class="material-symbols-outlined text-[18px]">refresh</span>' +
+              '</button>' +
+              '<button onclick="deleteSingleProxyIP(&quot;' + proxy.address + '&quot;, ' + proxy.port + ')" class="text-slate-400 hover:text-red-500 dark:text-zinc-600 dark:hover:text-red-400 transition-colors" title="删除">' +
+                '<span class="material-symbols-outlined text-[18px]">delete</span>' +
+              '</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      });
+      
+      tbody.innerHTML = html;
+    }
+    
+    function getStatusBadge(status) {
+      const badges = {
+        'active': '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>活跃</span>',
+        'pending': '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>待检测</span>',
+        'failed': '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>失败</span>'
+      };
+      return badges[status] || badges['pending'];
+    }
+    
+    function getRegionBadge(region, country) {
+      if (!region && !country) return '-';
+      const text = region || country;
+      const flagEmoji = getFlagEmoji(text);
+      return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 text-xs font-medium">' + flagEmoji + ' ' + text + '</span>';
+    }
+    
+    function getFlagEmoji(region) {
+      const flags = {
+        'HK': '🇭🇰', 'TW': '🇹🇼', 'JP': '🇯🇵', 'SG': '🇸🇬', 
+        'US': '🇺🇸', 'KR': '🇰🇷', 'DE': '🇩🇪', 'UK': '🇬🇧',
+        'FR': '🇫🇷', 'NL': '🇳🇱'
+      };
+      return flags[region] || '🌐';
+    }
+    
+    function formatTimeAgo(timestamp) {
+      const now = Date.now();
+      const diff = now - timestamp;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      
+      if (minutes < 1) return '刚刚';
+      if (minutes < 60) return minutes + ' 分钟前';
+      if (hours < 24) return hours + ' 小时前';
+      return days + ' 天前';
+    }
+    
+    let checkingInterval = null;
+    
+    function startCheckingPolling() {
+      // 清除已有的轮询
+      if (checkingInterval) {
+        clearInterval(checkingInterval);
+      }
+      
+      // 立即刷新一次
+      refreshProxyIPStats();
+      
+      // 每3秒轮询一次，检查是否还有pending状态的ProxyIP
+      checkingInterval = setInterval(async () => {
+        try {
+          const response = await fetch('/api/admin/proxyips');
+          const data = await response.json();
+          
+          const hasPending = data.some(p => p.status === 'pending');
+          
+          if (!hasPending) {
+            // 没有pending状态了，停止轮询
+            clearInterval(checkingInterval);
+            checkingInterval = null;
+            console.log('检测完成，停止轮询');
+          }
+          
+          // 刷新显示
+          refreshProxyIPStats();
+        } catch (e) {
+          console.error('轮询检查失败:', e);
+        }
+      }, 3000);
+    }
+    
+    async function batchAddSmartProxyIPs() {
+      const input = document.getElementById('batch-proxyip-input').value;
+      const lines = input.split('\\n').map(line => line.trim()).filter(line => line);
+      
+      if (lines.length === 0) {
+        showAlert('请输入要添加的 ProxyIP', 'warning');
+        return;
+      }
+      
+      // 解析 IP:端口
+      const proxies = [];
+      for (const line of lines) {
+        const parts = line.split(':');
+        if (parts.length === 2) {
+          const address = parts[0].trim();
+          const port = parseInt(parts[1].trim());
+          if (address && !isNaN(port)) {
+            proxies.push({ address, port });
+          }
+        }
+      }
+      
+      if (proxies.length === 0) {
+        showAlert('格式错误，请使用 IP:端口 或 域名:端口 格式', 'error');
+        return;
+      }
+      
+      try {
+        // 批量添加
+        const addResponse = await fetch('/api/admin/proxyips/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ proxyIPs: proxies })
+        });
+        
+        const addResult = await addResponse.json();
+        
+        if (addResult.success) {
+          showAlert('成功添加 ' + addResult.added + ' 个 ProxyIP，跳过 ' + addResult.exists + ' 个重复项', 'success');
+          document.getElementById('batch-proxyip-input').value = '';
+          
+          // 触发检测
+          const checkResponse = await fetch('/api/admin/proxyips/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+          
+          const checkResult = await checkResponse.json();
+          if (checkResult.success) {
+            showAlert('检测任务已启动，正在自动检测中...', 'info');
+            // 启动轮询，实时更新表格
+            startCheckingPolling();
+          }
+        } else {
+          showAlert('添加失败: ' + (addResult.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        console.error('批量添加失败:', error);
+        showAlert('添加失败: ' + error.message, 'error');
+      }
+    }
+    
+    async function checkAllProxyIPs() {
+      const confirmed = await showConfirm('确定要检测所有 ProxyIP 吗？\\n\\n这可能需要几分钟时间', '检测所有 ProxyIP');
+      if (!confirmed) return;
+      
+      try {
+        const response = await fetch('/api/admin/proxyips/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert('检测任务已启动，正在自动检测中...', 'success');
+          // 启动轮询，实时更新表格
+          startCheckingPolling();
+        } else {
+          showAlert('启动检测失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        console.error('检测失败:', error);
+        showAlert('检测失败: ' + error.message, 'error');
+      }
+    }
+    
+    async function checkSingleProxyIP(address, port) {
+      try {
+        const response = await fetch('/api/admin/proxyips/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [address + ':' + port] })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert('检测任务已启动，正在自动检测中...', 'success');
+          // 启动轮询，实时更新表格
+          startCheckingPolling();
+        } else {
+          showAlert('检测失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        showAlert('检测失败: ' + error.message, 'error');
+      }
+    }
+    
+    async function deleteSingleProxyIP(address, port) {
+      const confirmed = await showConfirm('确定要删除 ' + address + ':' + port + ' 吗？', '删除 ProxyIP');
+      if (!confirmed) return;
+      
+      try {
+        const response = await fetch('/api/admin/proxyips/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, port })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert('删除成功', 'success');
+          refreshProxyIPStats();
+        } else {
+          showAlert('删除失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        showAlert('删除失败: ' + error.message, 'error');
+      }
+    }
+    
+    async function cleanInactiveProxyIPs() {
+      const confirmed = await showConfirm('确定要清理失效的 ProxyIP 吗？\\n\\n将删除失败次数 ≥ 5 次的 IP', '清理失效 IP');
+      if (!confirmed) return;
+      
+      try {
+        const response = await fetch('/api/admin/proxyips/clean', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ threshold: 5 })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert('成功清理 ' + result.count + ' 个失效 ProxyIP', 'success');
+          refreshProxyIPStats();
+        } else {
+          showAlert('清理失败: ' + (result.error || '未知错误'), 'error');
+        }
+      } catch (error) {
+        showAlert('清理失败: ' + error.message, 'error');
       }
     }
     
