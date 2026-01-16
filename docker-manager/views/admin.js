@@ -3053,10 +3053,20 @@ function renderAdminPanel() {
       // 每3秒轮询一次，检查是否还有pending状态的ProxyIP
       checkingInterval = setInterval(async () => {
         try {
-          const response = await fetch('/api/admin/proxyips');
-          const data = await response.json();
+          const response = await fetch('/api/admin/proxyips/meta');
+          if (!response.ok) {
+            console.error('轮询失败: HTTP ' + response.status);
+            return;
+          }
           
-          const hasPending = data.some(p => p.status === 'pending');
+          const result = await response.json();
+          if (!result.success) {
+            console.error('轮询失败:', result.error);
+            return;
+          }
+          
+          const proxies = result.proxies || [];
+          const hasPending = proxies.some(p => p.status === 'pending');
           
           if (!hasPending) {
             // 没有pending状态了，停止轮询
