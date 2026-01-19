@@ -1127,6 +1127,14 @@ function importData(req, res) {
         
         const database = db.getDb(); // 获取数据库实例
         
+        // 获取当前登录的管理员信息，防止被覆盖
+        const sessionId = req.cookies?.admin_session;
+        const currentSession = sessionId ? db.validateSession(sessionId) : null;
+        const currentAdminUser = currentSession ? db.getUserById(currentSession.user_id) : null;
+        const currentAdmin = currentAdminUser ? database.prepare("SELECT * FROM users WHERE uuid = ?").get(currentAdminUser.uuid) : null;
+        
+        console.log(`[导入] 当前管理员: ${currentAdminUser?.username || '未登录'}, UUID: ${currentAdmin?.uuid || '无'}`);
+        
         let importedCounts = {
             users: 0,
             userAccounts: 0,
@@ -1151,10 +1159,16 @@ function importData(req, res) {
             }
         }
 
-        // 2. 导入 users
+        // 2. 导入 users（跳过当前登录的管理员，避免覆盖导致退出登录）
         if (data.users && data.users.length > 0) {
             for (const user of data.users) {
                 try {
+                    // 跳过当前登录的管理员用户
+                    if (currentAdmin && user.uuid === currentAdmin.uuid) {
+                        console.log(`[导入] 跳过当前管理员用户: ${user.name} (${user.uuid})`);
+                        continue;
+                    }
+                    
                     database.prepare(
                         "INSERT OR REPLACE INTO users (uuid, name, expiry, create_at, enabled) VALUES (?, ?, ?, ?, ?)"
                     ).run(user.uuid, user.name, user.expiry, user.create_at, user.enabled !== undefined ? user.enabled : 1);
@@ -1165,22 +1179,37 @@ function importData(req, res) {
             }
         }
 
-        // 3. 导入 user_accounts
+        // 3. 导入 user_accounts（跳过当前登录的管理员账号，保留原始ID以维持与订单的关联）
         if (data.userAccounts && data.userAccounts.length > 0) {
+            console.log(`[导入] 开始导入用户账号: ${data.userAccounts.length} 个`);
             for (const account of data.userAccounts) {
                 try {
-                    const existing = database.prepare("SELECT id FROM user_accounts WHERE username = ? OR uuid = ?").get(account.username, account.uuid);
-                    if (!existing) {
-                        const tempPasswordHash = db.hashPassword(account.username);
-                        database.prepare(
-                            "INSERT INTO user_accounts (username, password_hash, email, uuid, created_at, last_login) VALUES (?, ?, ?, ?, ?, ?)"
-                        ).run(account.username, tempPasswordHash, account.email || '', account.uuid, account.created_at, account.last_login);
-                        importedCounts.userAccounts++;
+                    // 跳过当前登录的管理员账号
+                    if (currentAdminUser && account.username === currentAdminUser.username) {
+                        console.log(`[导入] 跳过当前管理员账号: ${account.username}`);
+                        continue;
                     }
+                    
+                    // 检查是否已存在（通过 username 或 uuid）
+                    const existing = database.prepare("SELECT id, username FROM user_accounts WHERE username = ? OR uuid = ?").get(account.username, account.uuid);
+                    if (existing) {
+                        console.log(`[导入] 用户账号已存在: ${account.username} (现有id: ${existing.id}, 备份id: ${account.id})`);
+                        // 如果已存在但 id 不同，需要记录映射关系以便后续更新订单
+                        continue;
+                    }
+                    
+                    const tempPasswordHash = db.hashPassword(account.username);
+                    // 使用 INSERT OR REPLACE 并明确指定 id
+                    database.prepare(
+                        "INSERT OR REPLACE INTO user_accounts (id, username, password_hash, email, uuid, created_at, last_login) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    ).run(account.id, account.username, tempPasswordHash, account.email || '', account.uuid, account.created_at, account.last_login);
+                    importedCounts.userAccounts++;
+                    console.log(`[导入] 成功导入用户账号: ${account.username} (id: ${account.id})`);
                 } catch (e) {
-                    console.error('导入账号失败:', account.username, e.message);
+                    console.error('导入账号失败:', account.username, '(id:', account.id, ')', e.message);
                 }
             }
+            console.log(`[导入] 用户账号导入完成: ${importedCounts.userAccounts}/${data.userAccounts.length}`);
         }
 
         // 4. 导入 plans (subscription_plans 表)
@@ -1199,32 +1228,65 @@ function importData(req, res) {
             }
         }
 
-        // 5. 导入 orders
+        // 5. 导入 orders（需要通过 uuid 映射 user_id，因为 AUTOINCREMENT 会改变 id）
         if (data.orders && data.orders.length > 0) {
+            console.log(`[导入] 开始导入订单: ${data.orders.length} 条`);
             for (const order of data.orders) {
                 try {
-                    // 检查 user_id 和 plan_id 是否存在，避免外键约束错误
-                    const userExists = database.prepare("SELECT id FROM user_accounts WHERE id = ?").get(order.user_id);
+                    // 通过备份中的 user_id 找到对应的 uuid，然后用 uuid 查找当前数据库中的实际 user_id
+                    let actualUserId = null;
+                    if (data.userAccounts && data.userAccounts.length > 0) {
+                        const backupUser = data.userAccounts.find(acc => acc.id === order.user_id);
+                        if (backupUser && backupUser.uuid) {
+                            const currentUser = database.prepare("SELECT id FROM user_accounts WHERE uuid = ?").get(backupUser.uuid);
+                            if (currentUser) {
+                                actualUserId = currentUser.id;
+                            }
+                        }
+                    }
+                    
+                    // 如果找不到 uuid 映射，尝试直接使用原 user_id
+                    if (!actualUserId) {
+                        const userExists = database.prepare("SELECT id FROM user_accounts WHERE id = ?").get(order.user_id);
+                        if (userExists) {
+                            actualUserId = order.user_id;
+                        }
+                    }
+                    
+                    if (!actualUserId) {
+                        console.error(`[导入] 订单跳过: ${order.id} - 找不到对应的用户 (原user_id: ${order.user_id})`);
+                        continue;
+                    }
+                    
+                    // 检查 plan_id 是否存在
                     const planExists = database.prepare("SELECT id FROM subscription_plans WHERE id = ?").get(order.plan_id);
-                    
-                    if (!userExists) {
-                        console.error('导入订单跳过:', order.id, '用户不存在:', order.user_id);
-                        continue;
-                    }
                     if (!planExists) {
-                        console.error('导入订单跳过:', order.id, '套餐不存在:', order.plan_id);
+                        console.error(`[导入] 订单跳过: ${order.id} - 套餐不存在: ${order.plan_id}`);
                         continue;
                     }
                     
-                    // 使用实际的表字段: user_id, plan_id, amount, status, created_at, paid_at
+                    // 使用完整的表字段，包括所有支付相关字段
                     database.prepare(
-                        "INSERT OR REPLACE INTO orders (id, user_id, plan_id, amount, status, created_at, paid_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-                    ).run(order.id, order.user_id, order.plan_id, order.amount || order.price || 0, order.status, order.created_at, order.paid_at);
+                        "INSERT OR REPLACE INTO orders (id, order_no, user_id, plan_id, amount, status, created_at, paid_at, payment_order_id, payment_trade_id, payment_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    ).run(
+                        order.id, 
+                        order.order_no || null, 
+                        actualUserId,  // 使用映射后的实际 user_id
+                        order.plan_id, 
+                        order.amount || order.price || 0, 
+                        order.status, 
+                        order.created_at, 
+                        order.paid_at || null,
+                        order.payment_order_id || null,
+                        order.payment_trade_id || null,
+                        order.payment_type || 'manual'
+                    );
                     importedCounts.orders++;
                 } catch (e) {
                     console.error('导入订单失败:', order.id, e.message);
                 }
             }
+            console.log(`[导入] 订单导入完成: ${importedCounts.orders}/${data.orders.length}`);
         }
 
         // 6. 导入 announcements

@@ -3283,6 +3283,7 @@ function renderAdminPanel() {
     
     // ========== ProxyIP 拖拽排序功能 ==========
     let draggedProxyRow = null;
+    let isDraggingFromHandle = false;
     
     function initProxyIPDragAndDrop() {
       const tbody = document.getElementById('proxyip-table-body');
@@ -3292,7 +3293,12 @@ function renderAdminPanel() {
         const dragHandle = row.querySelector('.drag-handle');
         if (dragHandle) {
           dragHandle.addEventListener('mousedown', (e) => {
+            isDraggingFromHandle = true;
             row.setAttribute('draggable', 'true');
+          });
+          
+          dragHandle.addEventListener('mouseup', () => {
+            isDraggingFromHandle = false;
           });
           
           row.addEventListener('dragstart', handleProxyDragStart);
@@ -3301,6 +3307,7 @@ function renderAdminPanel() {
           row.addEventListener('dragend', (e) => {
             handleProxyDragEnd(e);
             row.removeAttribute('draggable');
+            isDraggingFromHandle = false;
           });
         }
       });
@@ -3308,13 +3315,12 @@ function renderAdminPanel() {
     
     function handleProxyDragStart(e) {
       // 只有从拖动手柄开始的拖动才生效
-      const dragHandle = e.target.closest('.drag-handle');
-      if (!dragHandle) {
+      if (!isDraggingFromHandle) {
         e.preventDefault();
         return;
       }
       
-      draggedProxyRow = e.target.closest('tr');
+      draggedProxyRow = e.currentTarget;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/html', draggedProxyRow.innerHTML);
       draggedProxyRow.classList.add('opacity-50');
