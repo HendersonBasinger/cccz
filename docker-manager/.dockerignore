@@ -38,6 +38,19 @@ Thumbs.db
 # 文档
 *.md
 !README.md
+TURNSTILE-*.md
+*-GUIDE.md
+*-SETUP.md
+*-CONFIG.md
+*-COMPARISON.md
+*-INTEGRATION.md
+
+# 配置脚本（仅用于本地配置，不需要打包到镜像）
+setup-*.sh
+configure-*.sh
+setup-*.js
+test-*.html
+verify-*.sh
 
 # 图片和媒体文件
 *.png
