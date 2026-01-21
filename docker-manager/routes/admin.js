@@ -443,6 +443,9 @@ function getSystemSettings(req, res) {
                 websiteUrl: settings.websiteUrl || '',
                 baseUrl: settings.baseUrl || '',
                 apiToken: settings.apiToken || '',
+                enableTurnstile: settings.enableTurnstile !== undefined ? settings.enableTurnstile : false,
+                turnstileSiteKey: settings.turnstileSiteKey || '',
+                turnstileSecretKey: settings.turnstileSecretKey || '',
                 proxyIPs: settings.proxyIPs || [],
                 bestDomains: settings.bestDomains || []
             }
@@ -604,6 +607,15 @@ function updateSystemSettings(req, res) {
         }
         if (body.apiToken !== undefined) {
             currentSettings.apiToken = body.apiToken || '';
+        }
+        if (body.enableTurnstile !== undefined) {
+            currentSettings.enableTurnstile = body.enableTurnstile === true || body.enableTurnstile === 'true';
+        }
+        if (body.turnstileSiteKey !== undefined) {
+            currentSettings.turnstileSiteKey = body.turnstileSiteKey || '';
+        }
+        if (body.turnstileSecretKey !== undefined) {
+            currentSettings.turnstileSecretKey = body.turnstileSecretKey || '';
         }
         
         db.saveSettings(currentSettings);

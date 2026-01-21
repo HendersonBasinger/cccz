@@ -104,6 +104,8 @@ async function renderAuthPage() {
     const siteName = settings.siteName || 'CloudDash';
     const enableRegister = settings.enableRegister === true;
     const requireInviteCode = settings.requireInviteCode === true;
+    const enableTurnstile = settings.enableTurnstile === true;
+    const turnstileSiteKey = settings.turnstileSiteKey || '';
     
     return `<!DOCTYPE html>
 <html class="light" lang="zh-CN">
@@ -117,6 +119,7 @@ async function renderAuthPage() {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script>
 tailwind.config = {
   darkMode: "class",
@@ -174,6 +177,30 @@ body { font-family: 'Inter', 'Noto Sans SC', sans-serif; -webkit-font-smoothing:
   backdrop-filter: blur(10px);
   box-shadow: 0 20px 60px rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
+
+/* Cloudflare Turnstile 样式 */
+.cf-turnstile-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.5rem 0;
+  min-height: 65px;
+}
+
+.cf-turnstile {
+  margin: 0 auto;
+}
+
+/* 深色模式下调整 Turnstile */
+.dark .cf-turnstile iframe {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* 禁用状态的按钮样式 */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 </style>
 </head>
 <body class="bg-slate-50 dark:bg-zinc-950 min-h-screen flex items-center justify-center p-4 overflow-hidden">
@@ -224,7 +251,10 @@ ${requireInviteCode ? `<div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">邀请码</label>
 <input id="registerInviteCode" type="text" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入邀请码"/>
 </div>` : ''}
-<button onclick="handleRegister()" class="w-full bg-primary text-white py-2 rounded-md hover:opacity-90 transition-opacity font-medium">注册</button>
+${enableTurnstile && turnstileSiteKey ? `<div id="turnstile-container" class="cf-turnstile-wrapper">
+<div class="cf-turnstile" data-sitekey="${turnstileSiteKey}" data-callback="onTurnstileSuccess" data-theme="auto" data-size="normal"></div>
+</div>` : ''}
+<button id="registerButton" onclick="handleRegister()" class="w-full bg-primary text-white py-2 rounded-md hover:opacity-90 transition-opacity font-medium" ${enableTurnstile && turnstileSiteKey ? 'disabled' : ''}>注册</button>
 <div id="registerError" class="hidden text-sm text-red-600"></div>
 `}
 </div>
@@ -457,6 +487,17 @@ async function handleLogin() {
   }
 }
 
+// Turnstile 验证成功回调
+let turnstileToken = null;
+
+function onTurnstileSuccess(token) {
+  turnstileToken = token;
+  const registerButton = document.getElementById('registerButton');
+  if (registerButton) {
+    registerButton.disabled = false;
+  }
+}
+
 async function handleRegister() {
   const username = document.getElementById('registerUsername').value;
   const password = document.getElementById('registerPassword').value;
@@ -471,11 +512,19 @@ async function handleRegister() {
     return;
   }
   
+  // 检查是否启用了 Turnstile (通过检查容器是否存在)
+  const turnstileContainer = document.getElementById('turnstile-container');
+  if (turnstileContainer && !turnstileToken) {
+    errorEl.textContent = '请完成人机验证';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+  
   try {
     const res = await fetch('/api/user/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username, password, email: '', invite_code})
+      body: JSON.stringify({username, password, email: '', invite_code, turnstileToken})
     });
     const data = await res.json();
     

@@ -270,7 +270,7 @@ function renderLandingPage() {
                 </div>
                 <span class="font-bold text-slate-900 dark:text-white tracking-tight">CFly</span>
             </div>
-            <p>© 2024 CFly. All rights reserved. 专为极致体验而生。</p>
+            <p>© 2026 CFly. All rights reserved. 专为极致体验而生。</p>
             <div class="flex justify-center space-x-6 mt-6">
                 <a href="#" class="hover:text-primary transition-colors">隐私政策</a>
                 <a href="#" class="hover:text-primary transition-colors">服务条款</a>

@@ -779,9 +779,6 @@ function renderAdminPanel() {
           <section>
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">系统设置</h2>
-              <button onclick="saveSystemSettings()" class="px-4 py-2 bg-primary text-white dark:bg-slate-100 dark:text-slate-950 text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
-                保存更改
-              </button>
             </div>
 
             <div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
@@ -928,7 +925,7 @@ function renderAdminPanel() {
               </div>
 
               <!-- API 密钥设置 -->
-              <div class="p-6">
+              <div class="p-6 border-b border-slate-100 dark:border-slate-800">
                 <div class="flex flex-col gap-1 mb-4">
                   <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-slate-400">key</span>
@@ -939,6 +936,44 @@ function renderAdminPanel() {
                 <div class="flex items-center gap-2 max-w-2xl">
                   <input id="input-apiToken" class="flex-1 px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm font-mono" type="text" placeholder="留空表示不启用密钥验证"/>
                   <button onclick="generateApiToken()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-sm font-medium rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors whitespace-nowrap">生成密钥</button>
+                </div>
+              </div>
+
+              <!-- Turnstile 人机验证设置 -->
+              <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-slate-400">shield</span>
+                      <label class="text-sm font-semibold">Turnstile 人机验证</label>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">配置 Cloudflare Turnstile 防止恶意注册，在 <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Cloudflare Dashboard</a> 获取密钥</p>
+                  </div>
+                  <label class="switch-shadcn">
+                    <input id="input-enableTurnstile" type="checkbox"/>
+                    <span class="slider-shadcn"></span>
+                  </label>
+                </div>
+                <div class="space-y-4 max-w-2xl">
+                  <div>
+                    <label class="text-xs text-slate-400 mb-1 block">Site Key (前端密钥)</label>
+                    <input id="input-turnstileSiteKey" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm font-mono" type="text" placeholder="1x00000000000000000000AA"/>
+                  </div>
+                  <div>
+                    <label class="text-xs text-slate-400 mb-1 block">Secret Key (后端密钥)</label>
+                    <input id="input-turnstileSecretKey" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-sm font-mono" type="text" placeholder="1x0000000000000000000000000000000AA"/>
+                  </div>
+                  <div class="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-md">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-base mt-0.5">info</span>
+                    <div class="flex-1">
+                      <p class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                        <strong>开关启用后</strong>，用户注册时需要完成人机验证。关闭则不启用验证功能。
+                      </p>
+                      <p class="text-xs text-blue-600 dark:text-blue-500 mt-1">
+                        获取密钥：<a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" class="underline hover:text-blue-800 dark:hover:text-blue-300">Cloudflare Turnstile</a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1091,9 +1126,6 @@ function renderAdminPanel() {
             <section class="space-y-6">
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg font-semibold tracking-tight">订阅设置</h2>
-                <button onclick="saveAllProxyIPSettings()" class="px-4 py-2 bg-primary text-white dark:bg-slate-100 dark:text-slate-950 text-sm font-medium rounded-md hover:opacity-90 transition-opacity">
-                  保存设置
-                </button>
               </div>
               <div class="grid gap-6">
                 <div class="space-y-2">
@@ -2899,11 +2931,49 @@ function renderAdminPanel() {
           const settings = settingsData.settings;
           document.getElementById('sub-url').value = settings.subUrl || '';
           document.getElementById('website-url').value = settings.websiteUrl || '';
+          
+          // 添加实时保存监听器
+          setupProxyIPSettingsAutoSave();
         }
       } catch (error) {
         console.error('加载订阅设置失败:', error);
         showAlert('加载失败: ' + error.message, 'error');
       }
+    }
+    
+    // 设置 ProxyIP 订阅设置的自动保存监听器
+    function setupProxyIPSettingsAutoSave() {
+      let saveTimeout;
+      
+      const autoSaveSettings = async () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+          try {
+            const subUrl = document.getElementById('sub-url').value.trim();
+            const websiteUrl = document.getElementById('website-url').value.trim();
+            
+            const settingsResponse = await fetch('/api/admin/saveSettings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subUrl, websiteUrl })
+            });
+            
+            const settingsResult = await settingsResponse.json();
+            if (settingsResult.success) {
+              showToast('✅ 订阅设置已保存');
+            }
+          } catch (error) {
+            console.error('自动保存失败:', error);
+          }
+        }, 1000); // 1秒防抖
+      };
+      
+      // 为输入框添加监听
+      const subUrlInput = document.getElementById('sub-url');
+      const websiteUrlInput = document.getElementById('website-url');
+      
+      if (subUrlInput) subUrlInput.addEventListener('input', autoSaveSettings);
+      if (websiteUrlInput) websiteUrlInput.addEventListener('input', autoSaveSettings);
     }
     
     async function saveAllProxyIPSettings() {
@@ -6166,6 +6236,17 @@ function renderAdminPanel() {
             document.getElementById('input-apiToken').value = settings.apiToken || '';
           }
           
+          // 加载 Turnstile 人机验证配置
+          if (document.getElementById('input-enableTurnstile')) {
+            document.getElementById('input-enableTurnstile').checked = settings.enableTurnstile || false;
+          }
+          if (document.getElementById('input-turnstileSiteKey')) {
+            document.getElementById('input-turnstileSiteKey').value = settings.turnstileSiteKey || '';
+          }
+          if (document.getElementById('input-turnstileSecretKey')) {
+            document.getElementById('input-turnstileSecretKey').value = settings.turnstileSecretKey || '';
+          }
+          
           // 加载仪表盘快捷操作开关
           const toggleRequireInvite = document.getElementById('toggle-require-invite');
           if (toggleRequireInvite) {
@@ -6177,10 +6258,112 @@ function renderAdminPanel() {
           const websiteUrlInput = document.getElementById('website-url');
           if (subUrlInput) subUrlInput.value = settings.subUrl || '';
           if (websiteUrlInput) websiteUrlInput.value = settings.websiteUrl || '';
+          
+          // 设置实时保存监听器
+          setupAutoSaveListeners();
         }
       } catch (error) {
         console.error('加载系统配置失败:', error);
       }
+    }
+    
+    // 设置自动保存监听器
+    function setupAutoSaveListeners() {
+      let saveTimeout;
+      
+      const autoSave = async () => {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(async () => {
+          try {
+            const settings = {
+              enableTrial: document.getElementById('input-enableTrial').checked,
+              trialDays: parseInt(document.getElementById('input-trialDays').value),
+              autoApproveOrder: document.getElementById('input-autoApproveOrder').checked,
+              requireInviteCode: document.getElementById('input-requireInviteCode').checked,
+              pendingOrderExpiry: parseInt(document.getElementById('input-pendingOrderExpiry').value),
+              paymentOrderExpiry: parseInt(document.getElementById('input-paymentOrderExpiry').value)
+            };
+            
+            // 添加快捷链接配置
+            const link1Name = document.getElementById('input-link1-name');
+            const link1Url = document.getElementById('input-link1-url');
+            const link2Name = document.getElementById('input-link2-name');
+            const link2Url = document.getElementById('input-link2-url');
+            
+            if (link1Name) settings.link1Name = link1Name.value.trim();
+            if (link1Url) settings.link1Url = link1Url.value.trim();
+            if (link2Name) settings.link2Name = link2Name.value.trim();
+            if (link2Url) settings.link2Url = link2Url.value.trim();
+            
+            // 添加自动清理配置
+            const autoCleanupEnabled = document.getElementById('input-autoCleanupEnabled');
+            const autoCleanupDays = document.getElementById('input-autoCleanupDays');
+            
+            if (autoCleanupEnabled) settings.autoCleanupEnabled = autoCleanupEnabled.checked;
+            if (autoCleanupDays) settings.autoCleanupDays = parseInt(autoCleanupDays.value);
+            
+            // 添加 API 密钥配置
+            const apiToken = document.getElementById('input-apiToken');
+            if (apiToken) settings.apiToken = apiToken.value.trim();
+            
+            // 添加 Turnstile 人机验证配置
+            const enableTurnstile = document.getElementById('input-enableTurnstile');
+            const turnstileSiteKey = document.getElementById('input-turnstileSiteKey');
+            const turnstileSecretKey = document.getElementById('input-turnstileSecretKey');
+            if (enableTurnstile) settings.enableTurnstile = enableTurnstile.checked;
+            if (turnstileSiteKey) settings.turnstileSiteKey = turnstileSiteKey.value.trim();
+            if (turnstileSecretKey) settings.turnstileSecretKey = turnstileSecretKey.value.trim();
+            
+            const response = await fetch('/api/admin/updateSystemSettings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(settings)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              showToast('✅ 设置已自动保存');
+            }
+          } catch (error) {
+            console.error('自动保存失败:', error);
+          }
+        }, 800); // 0.8秒防抖
+      };
+      
+      // 为所有开关添加监听
+      const switches = [
+        'input-enableTrial',
+        'input-autoApproveOrder',
+        'input-requireInviteCode',
+        'input-autoCleanupEnabled',
+        'input-enableTurnstile'
+      ];
+      
+      switches.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', autoSave);
+      });
+      
+      // 为所有输入框和下拉框添加监听
+      const inputs = [
+        'input-trialDays',
+        'input-pendingOrderExpiry',
+        'input-paymentOrderExpiry',
+        'input-link1-name',
+        'input-link1-url',
+        'input-link2-name',
+        'input-link2-url',
+        'input-autoCleanupDays',
+        'input-apiToken',
+        'input-turnstileSiteKey',
+        'input-turnstileSecretKey'
+      ];
+      
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', autoSave);
+      });
     }
     
     // 保存系统配置
@@ -6413,8 +6596,7 @@ function renderAdminPanel() {
               '</div>' +
             '</div>' +
             '<div class="p-6 border-t border-border-light dark:border-border-dark flex justify-end gap-3">' +
-              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">取消</button>' +
-              '<button onclick="saveUserFrontendUrl()" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-zinc-800">保存</button>' +
+              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">关闭</button>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -6427,6 +6609,37 @@ function renderAdminPanel() {
           if (data.success && data.settings && data.settings.userFrontendUrl) {
             document.getElementById('input-user-frontend-url').value = data.settings.userFrontendUrl;
           }
+          
+          // 添加实时保存监听
+          const urlInput = document.getElementById('input-user-frontend-url');
+          let saveTimeout;
+          urlInput.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            
+            saveTimeout = setTimeout(async () => {
+              const url = this.value.trim();
+              
+              // 如果有值但格式不对，不保存
+              if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                return;
+              }
+              
+              try {
+                const response = await fetch('/api/admin/updateSystemSettings', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userFrontendUrl: url })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                  showToast('✅ 用户前端链接已保存');
+                }
+              } catch (error) {
+                console.error('保存失败:', error);
+              }
+            }, 1000); // 1秒防抖
+          });
         })
         .catch(err => console.error('加载配置失败:', err));
     }
@@ -6486,8 +6699,7 @@ function renderAdminPanel() {
               '</div>' +
             '</div>' +
             '<div class="p-6 border-t border-border-light dark:border-border-dark flex justify-end gap-3">' +
-              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">取消</button>' +
-              '<button onclick="saveAutoCleanupSettings()" class="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-zinc-800">保存</button>' +
+              '<button onclick="closeModal()" class="px-4 py-2 text-sm font-medium border border-border-light dark:border-border-dark rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-900">关闭</button>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -6501,6 +6713,45 @@ function renderAdminPanel() {
             document.getElementById('toggle-auto-cleanup').checked = data.settings.autoCleanupEnabled || false;
             document.getElementById('input-cleanup-days').value = data.settings.autoCleanupDays || 30;
           }
+          
+          // 添加实时保存监听
+          const toggleCheckbox = document.getElementById('toggle-auto-cleanup');
+          const daysInput = document.getElementById('input-cleanup-days');
+          let saveTimeout;
+          
+          const autoSaveCleanupSettings = async () => {
+            clearTimeout(saveTimeout);
+            
+            saveTimeout = setTimeout(async () => {
+              const enabled = toggleCheckbox.checked;
+              const days = parseInt(daysInput.value);
+              
+              if (days < 7) {
+                return;
+              }
+              
+              try {
+                const response = await fetch('/api/admin/updateSystemSettings', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    autoCleanupEnabled: enabled,
+                    autoCleanupDays: days
+                  })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                  showToast('✅ 自动清理设置已保存');
+                }
+              } catch (error) {
+                console.error('保存失败:', error);
+              }
+            }, 500); // 0.5秒防抖
+          };
+          
+          toggleCheckbox.addEventListener('change', autoSaveCleanupSettings);
+          daysInput.addEventListener('input', autoSaveCleanupSettings);
         })
         .catch(err => console.error('加载配置失败:', err));
     }

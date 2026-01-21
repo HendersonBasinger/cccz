@@ -1033,8 +1033,14 @@ function updateProxyIPStatus(id, statusData) {
     const current = getDb().prepare('SELECT * FROM proxy_ips WHERE id = ?').get(id);
     if (!current) return null;
     
+    // 失败计数：失败时累加，成功时重置为0
     const newFailCount = status === 'active' ? 0 : (current.fail_count || 0) + 1;
-    const newSuccessCount = status === 'active' ? (current.success_count || 0) + 1 : current.success_count;
+    
+    // 成功计数：成功时累加，但最多保留100次（避免无限增长）
+    const currentSuccessCount = current.success_count || 0;
+    const newSuccessCount = status === 'active' 
+        ? Math.min(currentSuccessCount + 1, 100) 
+        : currentSuccessCount;
     
     const stmt = getDb().prepare(`
         UPDATE proxy_ips 
