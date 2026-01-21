@@ -299,7 +299,15 @@ function generateVlessLinks(workerDomain, uuid, userName, expiry, websiteUrl) {
     const links = [];
     const wsPath = '/?ed=2048';
     const protocol = 'vless';
-    const domains = cachedData.settings.bestDomains || FALLBACK_CONFIG.bestDomains;
+    const allDomains = cachedData.settings.bestDomains || FALLBACK_CONFIG.bestDomains;
+    
+    // 过滤掉禁用的节点（以___DISABLED___开头的）
+    const domains = allDomains.filter(domain => {
+        if (typeof domain === 'string' && domain.startsWith('___DISABLED___')) {
+            return false;
+        }
+        return true;
+    });
     
     function formatExpiry(timestamp) {
         if (!timestamp) return 'Not-Activated';

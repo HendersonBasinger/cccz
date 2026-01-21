@@ -200,11 +200,11 @@ body { font-family: 'Inter', 'Noto Sans SC', sans-serif; -webkit-font-smoothing:
 <div id="loginForm" class="p-6 space-y-4">
 <div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">用户名</label>
-<input id="loginUsername" type="text" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入用户名"/>
+<input id="loginUsername" type="text" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入用户名"/>
 </div>
 <div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">密码</label>
-<input id="loginPassword" type="password" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入密码"/>
+<input id="loginPassword" type="password" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入密码"/>
 </div>
 <button onclick="handleLogin()" class="w-full bg-primary text-white py-2 rounded-md hover:opacity-90 transition-opacity font-medium">登录</button>
 <div id="loginError" class="hidden text-sm text-red-600"></div>
@@ -214,15 +214,15 @@ body { font-family: 'Inter', 'Noto Sans SC', sans-serif; -webkit-font-smoothing:
 ${!enableRegister ? '<div class="text-center text-slate-500 py-4">注册功能暂未开放</div>' : `
 <div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">用户名</label>
-<input id="registerUsername" type="text" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="3-20个字符"/>
+<input id="registerUsername" type="text" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="3-20个字符"/>
 </div>
 <div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">密码</label>
-<input id="registerPassword" type="password" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="至少6个字符"/>
+<input id="registerPassword" type="password" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="至少6个字符"/>
 </div>
 ${requireInviteCode ? `<div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 dark:text-zinc-300">邀请码</label>
-<input id="registerInviteCode" type="text" class="w-full px-3 py-2 bg-transparent border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入邀请码"/>
+<input id="registerInviteCode" type="text" class="w-full px-3 py-2 bg-transparent text-slate-900 dark:text-zinc-100 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary focus:border-primary transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600" placeholder="请输入邀请码"/>
 </div>` : ''}
 <button onclick="handleRegister()" class="w-full bg-primary text-white py-2 rounded-md hover:opacity-90 transition-opacity font-medium">注册</button>
 <div id="registerError" class="hidden text-sm text-red-600"></div>
@@ -1100,18 +1100,24 @@ function parseDomainEntry(entry) {
     let address, port, isDomain = false;
     
     if (addressPart.startsWith('[')) {
+      // IPv6: [2606:4700:7::a29f:8601]:443
       const ipv6Match = addressPart.match(/^\\[([^\\]]+)\\]:([0-9]+)$/);
       if (!ipv6Match) return null;
       address = ipv6Match[1];
       port = ipv6Match[2];
       isDomain = false;
-    } else if (addressPart.match(/^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:/)) {
-      const ipv4Match = addressPart.match(/^([0-9.]+):([0-9]+)$/);
-      if (!ipv4Match) return null;
-      address = ipv4Match[1];
-      port = ipv4Match[2];
-      isDomain = false;
+    } else if (addressPart.match(/^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}/)) {
+      // IPv4: 104.18.34.78:443 或 104.18.34.78
+      const ipv4Match = addressPart.match(/^([0-9.]+):?([0-9]+)?$/);
+      if (ipv4Match) {
+        address = ipv4Match[1];
+        port = ipv4Match[2] || '443'; // 端口，默认443
+        isDomain = false;
+      } else {
+        return null;
+      }
     } else {
+      // 域名: cf.twitter.now.cc 或 cf.twitter.now.cc:443
       isDomain = true;
       if (addressPart.includes(':')) {
         const domainMatch = addressPart.match(/^([^:]+):([0-9]+)$/);
@@ -1128,20 +1134,26 @@ function parseDomainEntry(entry) {
       }
     }
     
+    // 解析标签和地区
     let label, region;
-    if (isDomain) {
-      label = address;
-      region = '';
-    } else if (infoPart) {
+    if (infoPart) {
+      // 有#分隔符，说明有自定义别名或标签
+      // 优先使用用户设置的别名
       const infoMatch = infoPart.match(/^(.+?)\\s+([A-Z]{2,4})$/);
       if (infoMatch) {
         label = infoMatch[1];
         region = infoMatch[2];
       } else {
+        // 整个作为标签（用户自定义别名）
         label = infoPart;
         region = '';
       }
+    } else if (isDomain) {
+      // 域名节点且无别名：名称就是域名本身
+      label = address;
+      region = '';
     } else {
+      // IP节点且无别名：使用IP地址
       label = address;
       region = '';
     }
@@ -1829,6 +1841,18 @@ if(navItems.includes(initialPage)) {
 } else {
   switchPage('account');
 }
+
+// 页面加载后自动显示公告（仅显示一次，使用 sessionStorage）
+(function() {
+  const hasShownAnnouncement = sessionStorage.getItem('announcementShown');
+  if (!hasShownAnnouncement) {
+    // 延迟500ms后显示公告，确保页面已完全加载
+    setTimeout(() => {
+      showAnnouncements();
+      sessionStorage.setItem('announcementShown', 'true');
+    }, 500);
+  }
+})();
 </script>
 </body>
 </html>`;

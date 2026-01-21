@@ -611,10 +611,20 @@ function getBestDomains(req, res) {
             });
         }
         
-        const bestDomains = db.getBestDomains();
+        const allDomains = db.getBestDomains();
+        
+        // 过滤掉禁用的节点，只返回启用的
+        const enabledDomains = allDomains.filter(domain => {
+            // 如果以___DISABLED___开头，说明是禁用的
+            if (typeof domain === 'string' && domain.startsWith('___DISABLED___')) {
+                return false;
+            }
+            return true;
+        });
+        
         res.json({
             success: true,
-            domains: bestDomains
+            domains: enabledDomains
         });
     } catch (e) {
         console.error('获取最佳域名错误:', e);

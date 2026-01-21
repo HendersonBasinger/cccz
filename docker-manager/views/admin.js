@@ -396,6 +396,54 @@ function renderAdminPanel() {
       background: #09090b;
       color: #fafafa;
     }
+    /* Shadcn UI 开关样式 */
+    .switch-btn {
+      position: relative;
+      display: inline-flex;
+      height: 1.5rem; /* 24px */
+      width: 2.75rem; /* 44px */
+      align-items: center;
+      border-radius: 9999px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .switch-btn:focus-visible {
+      outline: none;
+      ring: 2px;
+      ring-color: #a1a1aa;
+      ring-offset: 2px;
+    }
+    .dark .switch-btn:focus-visible {
+      ring-offset-color: #09090b;
+    }
+    /* 开关背景 - 关闭状态 */
+    .switch-btn[data-active="false"] {
+      background-color: #f4f4f5; /* zinc-100 */
+      border-color: #e4e4e7; /* zinc-200 */
+    }
+    .dark .switch-btn[data-active="false"] {
+      background-color: #27272a; /* zinc-800 */
+      border-color: #3f3f46; /* zinc-700 */
+    }
+    /* 开关背景 - 开启状态 */
+    .switch-btn[data-active="true"] {
+      background-color: #000000; /* primary black */
+    }
+    /* 滑块 */
+    .switch-slider {
+      display: inline-block;
+      height: 1rem; /* 16px */
+      width: 1rem; /* 16px */
+      transform: translateX(0);
+      border-radius: 9999px;
+      background-color: #ffffff;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease-in-out;
+    }
+    .switch-btn[data-active="true"] .switch-slider {
+      transform: translateX(1.25rem); /* 20px */
+    }
     /* Shadcn 风格开关 */
     .switch-shadcn {
       position: relative;
@@ -597,12 +645,12 @@ function renderAdminPanel() {
         
         <a onclick="switchSection('proxy-ips')" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
           <span class="material-symbols-outlined">language</span>
-          <span>反代 IP</span>
+          <span>ProxyIP管理</span>
         </a>
         
         <a onclick="switchSection('best-domains')" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
           <span class="material-symbols-outlined">star</span>
-          <span>优选域名</span>
+          <span>节点管理</span>
         </a>
         
         <div class="pt-6 pb-2">
@@ -1188,9 +1236,23 @@ function renderAdminPanel() {
             
             <!-- 标签切换 -->
             <div class="w-full">
-              <div class="inline-flex h-10 items-center justify-center rounded-md bg-slate-100 dark:bg-zinc-900 p-1 text-slate-500 dark:text-zinc-400 mb-4">
-                <button id="tab-domain-list" class="tab-trigger active inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50" onclick="switchBestDomainsTab('domain-list')">域名列表</button>
-                <button id="tab-node-status" class="tab-trigger inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50" onclick="switchBestDomainsTab('node-status')">节点状态</button>
+              <div class="flex justify-between items-end mb-4">
+                <div class="inline-flex h-10 items-center justify-center rounded-md bg-slate-100 dark:bg-zinc-900 p-1 text-slate-500 dark:text-zinc-400">
+                  <button id="tab-domain-list" class="tab-trigger active inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50" onclick="switchBestDomainsTab('domain-list')">域名列表</button>
+                  <button id="tab-node-status" class="tab-trigger inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:pointer-events-none disabled:opacity-50" onclick="switchBestDomainsTab('node-status')">节点状态</button>
+                </div>
+                <div id="batch-actions-bar" class="flex items-center gap-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-md px-3 py-1.5 shadow-sm transition-all opacity-0 pointer-events-none">
+                  <span class="text-xs text-slate-500 dark:text-zinc-400 mr-2">已选择 <span id="selected-count">0</span> 项</span>
+                  <button onclick="batchEnableDomains()" class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-primary text-white rounded hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[14px]">play_arrow</span> 批量启用
+                  </button>
+                  <button onclick="batchDisableDomains()" class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border border-slate-200 dark:border-zinc-800 rounded hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">stop</span> 批量禁用
+                  </button>
+                  <button onclick="batchDeleteDomains()" class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-red-600 border border-red-100 hover:bg-red-50 rounded transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">delete</span> 批量删除
+                  </button>
+                </div>
               </div>
               
               <!-- 域名列表视图 -->
@@ -1202,11 +1264,14 @@ function renderAdminPanel() {
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-sm">
                     <thead class="bg-slate-50/30 dark:bg-zinc-900">
-                      <tr>
-                        <th class="px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 w-10"></th>
-                        <th class="px-4 py-2 font-medium text-slate-500 dark:text-zinc-400">资源地址</th>
-                        <th class="px-4 py-2 font-medium text-slate-500 dark:text-zinc-400">状态</th>
-                        <th class="px-4 py-2 font-medium text-slate-500 dark:text-zinc-400 text-right">操作</th>
+                      <tr class="border-b border-slate-100 dark:border-zinc-800">
+                        <th class="px-4 py-3 w-10">
+                          <input type="checkbox" id="select-all" onclick="toggleSelectAll()" class="rounded border-slate-300 dark:border-zinc-700 text-primary focus:ring-primary w-4 h-4"/>
+                        </th>
+                        <th class="px-4 py-3 font-medium text-slate-500 dark:text-zinc-400">资源地址</th>
+                        <th class="px-4 py-3 font-medium text-slate-500 dark:text-zinc-400">节点状态</th>
+                        <th class="px-4 py-3 font-medium text-slate-500 dark:text-zinc-400 text-center">开启/关闭</th>
+                        <th class="px-4 py-3 font-medium text-slate-500 dark:text-zinc-400 text-right">操作</th>
                       </tr>
                     </thead>
                     <tbody id="best-domains-list" class="divide-y divide-slate-100 dark:divide-zinc-800">
@@ -1580,8 +1645,8 @@ function renderAdminPanel() {
       const titles = {
         'dashboard': '仪表盘概览',
         'users': '用户管理',
-        'proxy-ips': '反代 IP 管理',
-        'best-domains': '优选域名管理',
+        'proxy-ips': 'ProxyIP管理',
+        'best-domains': '节点管理',
         'plans': '套餐管理',
         'orders': '订单管理',
         'announcements': '公告管理',
@@ -5160,6 +5225,24 @@ function renderAdminPanel() {
         let domains = data.bestDomains || [];
         const lastCronSyncTime = data.lastCronSyncTime || Date.now();
         
+        // 解析禁用状态：将___DISABLED___前缀转换为对象格式
+        domains = domains.map(domain => {
+          if (typeof domain === 'string' && domain.startsWith('___DISABLED___')) {
+            return {
+              address: domain.substring('___DISABLED___'.length), // 移除___DISABLED___前缀（15个字符）
+              enabled: false
+            };
+          } else if (typeof domain === 'string') {
+            // 字符串格式，默认为启用状态
+            return {
+              address: domain,
+              enabled: true
+            };
+          }
+          // 已经是对象格式，直接返回
+          return domain;
+        });
+        
         // 计算距离下次执行的剩余秒数
         const elapsed = Math.floor((Date.now() - lastCronSyncTime) / 1000);
         const interval = 15 * 60; // 15分钟
@@ -5168,8 +5251,12 @@ function renderAdminPanel() {
         
         // 排序：IPv4在前，IPv6在后
         domains.sort((a, b) => {
-          const isIPv6A = a.includes('[');
-          const isIPv6B = b.includes('[');
+          // 获取地址字符串（支持对象和字符串格式）
+          const addrA = typeof a === 'string' ? a : a.address;
+          const addrB = typeof b === 'string' ? b : b.address;
+          
+          const isIPv6A = addrA.includes('[');
+          const isIPv6B = addrB.includes('[');
           
           if (isIPv6A && !isIPv6B) return 1;  // IPv6排后
           if (!isIPv6A && isIPv6B) return -1; // IPv4排前
@@ -5195,37 +5282,74 @@ function renderAdminPanel() {
       }
       
       let html = '';
-      currentBestDomains.forEach((domain, index) => {
-        // 检测IP类型和标签
-        const isIPv6 = domain.includes('[');
-        const typeClass = isIPv6 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+      currentBestDomains.forEach((domainObj, index) => {
+        // 支持对象格式和字符串格式
+        const domain = typeof domainObj === 'string' ? domainObj : domainObj.address;
+        const enabled = typeof domainObj === 'string' ? true : (domainObj.enabled !== false);
+        
+        // 解析域名：address#alias
+        const parts = domain.split('#');
+        const address = parts[0] || domain;
+        const alias = parts[1] || '';
+        
+        // 检测IP类型
+        const isIPv6 = address.includes('[');
         const typeText = isIPv6 ? 'IPv6' : 'IPv4';
         
-        // 提取标签（#后的内容）
-        let label = '';
-        if (domain.includes('#')) {
-          label = domain.split('#')[1] || '';
+        // 提取IP和端口
+        let ip = address;
+        let port = '443';
+        if (address.includes(':')) {
+          const addrParts = address.split(':');
+          if (isIPv6) {
+            // IPv6: [xxx]:port
+            if (address.endsWith(']')) {
+              ip = address;
+            } else {
+              const lastColon = address.lastIndexOf(':');
+              ip = address.substring(0, lastColon);
+              port = address.substring(lastColon + 1);
+            }
+          } else {
+            // IPv4: xxx.xxx.xxx.xxx:port
+            ip = addrParts[0];
+            port = addrParts[1] || '443';
+          }
         }
         
-        html += '<tr class="group hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors" draggable="true" data-index="' + index + '" ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragend="handleDragEnd(event)">' +
-          '<td class="px-4 py-3"><span class="material-symbols-outlined text-slate-300 dark:text-zinc-600 text-[18px] cursor-move">drag_indicator</span></td>' +
-          '<td class="px-4 py-3">' +
-            '<div class="flex items-center gap-2">' +
-              '<span class="px-2 py-0.5 text-[11px] font-medium rounded ' + typeClass + '">' + typeText + '</span>' +
-              '<span class="font-mono text-slate-700 dark:text-zinc-300">' + domain + '</span>' +
-            '</div>' +
-            (label ? '<div class="mt-1 text-xs text-slate-500 dark:text-zinc-500">📍 ' + label + '</div>' : '') +
+        // Shadcn UI 风格的状态显示
+        const statusDotClass = enabled ? 'bg-black dark:bg-zinc-100' : 'bg-zinc-300 dark:bg-zinc-700';
+        const statusTextClass = enabled ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-500';
+        const statusText = enabled ? '运行中' : '已关闭';
+        const switchActive = enabled ? 'true' : 'false';
+        
+        html += '<tr class="group hover:bg-slate-50/50 dark:hover:bg-zinc-800/20 transition-colors">' +
+          '<td class="px-4 py-3"><input type="checkbox" class="domain-check rounded border-slate-300 dark:border-zinc-700 text-primary focus:ring-primary w-4 h-4" data-index="' + index + '" onchange="updateBatchActionsBar()"/></td>' +
+          '<td class="px-4 py-3"><div class="font-mono text-slate-700 dark:text-zinc-300">' + address + '</div>' +
+          (alias ? '<div class="text-[11px] text-slate-500 dark:text-zinc-500 mt-0.5">' + alias + '</div>' : '') +
           '</td>' +
           '<td class="px-4 py-3">' +
-            '<div class="flex items-center gap-1.5">' +
-              '<span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>' +
-              '<span class="text-xs text-slate-500 dark:text-zinc-500">在线</span>' +
+            '<div class="flex items-center gap-3">' +
+              '<span class="w-2 h-2 rounded-full ' + statusDotClass + ' transition-colors"></span>' +
+              '<span class="text-sm font-medium ' + statusTextClass + ' transition-colors">' + statusText + '</span>' +
+            '</div>' +
+          '</td>' +
+          '<td class="px-4 py-3">' +
+            '<div class="flex justify-center">' +
+              '<button class="switch-btn" data-active="' + switchActive + '" data-index="' + index + '" onclick="toggleDomainStatusShadcn(' + index + ')">' +
+                '<span class="switch-slider"></span>' +
+              '</button>' +
             '</div>' +
           '</td>' +
           '<td class="px-4 py-3 text-right">' +
-            '<button onclick="deleteBestDomain(' + index + ')" class="text-slate-400 hover:text-red-500 transition-colors">' +
-              '<span class="material-symbols-outlined text-[18px]">close</span>' +
-            '</button>' +
+            '<div class="flex justify-end gap-2">' +
+              '<button onclick="editBestDomain(' + index + ')" class="p-1.5 text-slate-400 hover:text-primary transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800 rounded">' +
+                '<span class="material-symbols-outlined text-[20px]">edit_note</span>' +
+              '</button>' +
+              '<button onclick="deleteBestDomain(' + index + ')" class="p-1.5 text-slate-400 hover:text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-900/10 rounded">' +
+                '<span class="material-symbols-outlined text-[20px]">delete</span>' +
+              '</button>' +
+            '</div>' +
           '</td>' +
         '</tr>';
       });
@@ -5260,6 +5384,7 @@ function renderAdminPanel() {
         currentBestDomains.splice(draggedIndex, 1);
         currentBestDomains.splice(dropIndex, 0, draggedItem);
         renderBestDomainsList();
+        autoSaveBestDomains(); // 自动保存
       }
       
       return false;
@@ -5282,14 +5407,24 @@ function renderAdminPanel() {
       // 去重并添加到列表开头（方便用户使用，无需拖动）
       const addedDomains = [];
       newDomains.forEach(domain => {
-        if (!currentBestDomains.includes(domain)) {
-          addedDomains.push(domain);
+        // 检查是否已存在（对比address字段）
+        const exists = currentBestDomains.some(item => {
+          const itemAddr = typeof item === 'string' ? item : item.address;
+          return itemAddr === domain;
+        });
+        if (!exists) {
+          // 添加为对象格式，默认启用
+          addedDomains.push({
+            address: domain,
+            enabled: true
+          });
         }
       });
       currentBestDomains.unshift(...addedDomains);
       
       document.getElementById('best-domains-batch-input').value = '';
       renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
       showAlert('已添加 ' + newDomains.length + ' 个优选域名', 'success');
     }
     
@@ -5298,6 +5433,7 @@ function renderAdminPanel() {
       if (!confirmed) return;
       currentBestDomains.splice(index, 1);
       renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
     }
     
     async function clearAllBestDomains() {
@@ -5305,6 +5441,7 @@ function renderAdminPanel() {
       if (!confirmed) return;
       currentBestDomains = [];
       renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
       showAlert('已清空优选域名列表', 'success');
     }
     
@@ -5334,6 +5471,7 @@ function renderAdminPanel() {
           });
           currentBestDomains.unshift(...addedDomains);
           renderBestDomainsList();
+          autoSaveBestDomains(); // 自动保存
           showAlert('已获取 ' + addedDomains.length + ' 个 IPv4 优选域名', 'success');
         } else {
           showAlert('获取失败: ' + (result.error || '未知错误'), 'error');
@@ -5363,12 +5501,22 @@ function renderAdminPanel() {
           const newDomains = result.domains || [];
           const addedDomains = [];
           newDomains.forEach(domain => {
-            if (!currentBestDomains.includes(domain)) {
-              addedDomains.push(domain);
+            // 检查是否已存在
+            const exists = currentBestDomains.some(item => {
+              const itemAddr = typeof item === 'string' ? item : item.address;
+              return itemAddr === domain;
+            });
+            if (!exists) {
+              // 添加为对象格式，默认启用
+              addedDomains.push({
+                address: domain,
+                enabled: true
+              });
             }
           });
           currentBestDomains.unshift(...addedDomains);
           renderBestDomainsList();
+          autoSaveBestDomains(); // 自动保存
           showAlert('已获取 ' + addedDomains.length + ' 个 IPv6 优选域名', 'success');
         } else {
           showAlert('获取失败: ' + (result.error || '未知错误'), 'error');
@@ -5378,12 +5526,65 @@ function renderAdminPanel() {
       }
     }
     
-    async function saveAllBestDomains() {
+    // 自动保存函数（静默保存，不显示提示）
+    async function autoSaveBestDomains() {
       try {
+        // 将对象格式转换为字符串格式保存
+        const domainsToSave = currentBestDomains.map(item => {
+          if (typeof item === 'string') {
+            // 字符串格式，直接返回
+            return item;
+          }
+          // 对象格式，检查是否禁用
+          if (item.enabled === false) {
+            // 检查是否已经有___DISABLED___前缀，避免重复添加
+            if (item.address.startsWith('___DISABLED___')) {
+              return item.address;
+            }
+            return '___DISABLED___' + item.address;
+          }
+          return item.address;
+        });
+        
         const response = await fetch('/api/admin/best-domains', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bestDomains: currentBestDomains })
+          body: JSON.stringify({ bestDomains: domainsToSave })
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          console.error('自动保存失败:', result.error);
+        }
+      } catch (error) {
+        console.error('自动保存失败:', error);
+      }
+    }
+    
+    async function saveAllBestDomains() {
+      try {
+        // 将对象格式转换为字符串格式保存
+        const domainsToSave = currentBestDomains.map(item => {
+          if (typeof item === 'string') {
+            // 字符串格式，直接返回
+            return item;
+          }
+          // 对象格式，检查是否禁用
+          if (item.enabled === false) {
+            // 检查是否已经有___DISABLED___前缀，避免重复添加
+            if (item.address.startsWith('___DISABLED___')) {
+              return item.address;
+            }
+            return '___DISABLED___' + item.address;
+          }
+          return item.address;
+        });
+        
+        const response = await fetch('/api/admin/best-domains', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bestDomains: domainsToSave })
         });
         
         const result = await response.json();
@@ -5396,6 +5597,223 @@ function renderAdminPanel() {
       } catch (error) {
         showAlert('保存失败: ' + error.message, 'error');
       }
+    }
+    
+    // 批量操作相关函数
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('select-all');
+      const checkboxes = document.querySelectorAll('.domain-check');
+      checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+      });
+      updateBatchActionsBar();
+    }
+    
+    function updateBatchActionsBar() {
+      const checkboxes = document.querySelectorAll('.domain-check:checked');
+      const count = checkboxes.length;
+      const countSpan = document.getElementById('selected-count');
+      const actionsBar = document.getElementById('batch-actions-bar');
+      
+      if (countSpan) countSpan.textContent = count;
+      if (actionsBar) {
+        if (count > 0) {
+          actionsBar.style.opacity = '1';
+          actionsBar.style.pointerEvents = 'auto';
+        } else {
+          actionsBar.style.opacity = '0';
+          actionsBar.style.pointerEvents = 'none';
+        }
+      }
+    }
+    
+    // Shadcn UI 风格开关功能
+    function toggleDomainStatusShadcn(index) {
+      const domainObj = currentBestDomains[index];
+      if (typeof domainObj === 'string') {
+        console.warn('意外的字符串格式域名:', domainObj);
+        currentBestDomains[index] = {
+          address: domainObj,
+          enabled: false
+        };
+      } else {
+        // 切换状态
+        domainObj.enabled = !domainObj.enabled;
+      }
+      renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
+    }
+    
+    // 开关功能（保留旧版本兼容）
+    function toggleDomainStatus(index) {
+      toggleDomainStatusShadcn(index);
+    }
+    
+    // 编辑域名
+    async function editBestDomain(index) {
+      const domainObj = currentBestDomains[index];
+      const domain = typeof domainObj === 'string' ? domainObj : domainObj.address;
+      
+      // 解析当前域名
+      const parts = domain.split('#');
+      const address = parts[0] || '';
+      const alias = parts[1] || '';
+      
+      // 提取IP/域名和端口
+      let ip = address;
+      let port = '443';
+      if (address.includes(':')) {
+        const isIPv6 = address.includes('[');
+        if (isIPv6) {
+          const lastColon = address.lastIndexOf(':');
+          if (lastColon > address.lastIndexOf(']')) {
+            ip = address.substring(0, lastColon);
+            port = address.substring(lastColon + 1);
+          }
+        } else {
+          const addrParts = address.split(':');
+          ip = addrParts[0];
+          port = addrParts[1] || '443';
+        }
+      }
+      
+      const modalHtml = 
+        '<div class="space-y-4">' +
+          '<div>' +
+            '<label class="text-sm font-medium text-slate-700 dark:text-zinc-300 block mb-2">节点地址/IP</label>' +
+            '<input type="text" id="edit-domain-ip" value="' + ip + '" class="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary outline-none" placeholder="例如: 104.16.88.20 或 cf.twitter.now.cc"/>' +
+          '</div>' +
+          '<div>' +
+            '<label class="text-sm font-medium text-slate-700 dark:text-zinc-300 block mb-2">端口</label>' +
+            '<input type="number" id="edit-domain-port" value="' + port + '" class="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary outline-none" placeholder="443"/>' +
+          '</div>' +
+          '<div>' +
+            '<label class="text-sm font-medium text-slate-700 dark:text-zinc-300 block mb-2">别名/标签（可选）</label>' +
+            '<input type="text" id="edit-domain-alias" value="' + alias + '" class="w-full px-3 py-2 text-sm bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-md focus:ring-1 focus:ring-primary outline-none" placeholder="例如: 香港 或 美国"/>' +
+          '</div>' +
+          '<div class="flex gap-3 pt-2">' +
+            '<button onclick="closeModal()" class="flex-1 px-4 py-2 text-sm font-medium border border-slate-200 dark:border-zinc-800 rounded-md hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors">' +
+              '取消' +
+            '</button>' +
+            '<button onclick="confirmEditDomain(' + index + ')" class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:opacity-90 transition-opacity">' +
+              '保存' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      
+      openModal('编辑优选域名', modalHtml);
+    }
+    
+    function confirmEditDomain(index) {
+      const ip = document.getElementById('edit-domain-ip').value.trim();
+      const port = document.getElementById('edit-domain-port').value.trim() || '443';
+      const alias = document.getElementById('edit-domain-alias').value.trim();
+      
+      if (!ip) {
+        showAlert('请输入节点地址或IP', 'warning');
+        return;
+      }
+      
+      // 始终包含端口号，确保parseDomainEntry能正确识别格式
+      let newAddress = ip + ':' + port;
+      
+      // 添加别名
+      if (alias) {
+        newAddress = newAddress + '#' + alias;
+      }
+      
+      const domainObj = currentBestDomains[index];
+      if (typeof domainObj === 'string') {
+        currentBestDomains[index] = newAddress;
+      } else {
+        domainObj.address = newAddress;
+      }
+      
+      renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
+      closeModal();
+      showAlert('已更新节点信息', 'success');
+    }
+    
+    // 批量启用
+    async function batchEnableDomains() {
+      const checkboxes = document.querySelectorAll('.domain-check:checked');
+      if (checkboxes.length === 0) {
+        showAlert('请先选择要启用的域名', 'warning');
+        return;
+      }
+      
+      checkboxes.forEach(cb => {
+        const index = parseInt(cb.getAttribute('data-index'));
+        const domainObj = currentBestDomains[index];
+        if (typeof domainObj === 'string') {
+          currentBestDomains[index] = { address: domainObj, enabled: true };
+        } else {
+          domainObj.enabled = true;
+        }
+      });
+      
+      renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
+      showAlert('已启用 ' + checkboxes.length + ' 个域名', 'success');
+      
+      // 清除选择
+      document.getElementById('select-all').checked = false;
+      updateBatchActionsBar();
+    }
+    
+    // 批量禁用
+    async function batchDisableDomains() {
+      const checkboxes = document.querySelectorAll('.domain-check:checked');
+      if (checkboxes.length === 0) {
+        showAlert('请先选择要禁用的域名', 'warning');
+        return;
+      }
+      
+      checkboxes.forEach(cb => {
+        const index = parseInt(cb.getAttribute('data-index'));
+        const domainObj = currentBestDomains[index];
+        if (typeof domainObj === 'string') {
+          currentBestDomains[index] = { address: domainObj, enabled: false };
+        } else {
+          domainObj.enabled = false;
+        }
+      });
+      
+      renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
+      showAlert('已禁用 ' + checkboxes.length + ' 个域名', 'success');
+      
+      // 清除选择
+      document.getElementById('select-all').checked = false;
+      updateBatchActionsBar();
+    }
+    
+    // 批量删除
+    async function batchDeleteDomains() {
+      const checkboxes = document.querySelectorAll('.domain-check:checked');
+      if (checkboxes.length === 0) {
+        showAlert('请先选择要删除的域名', 'warning');
+        return;
+      }
+      
+      const confirmed = await showConfirm('确定要删除选中的 ' + checkboxes.length + ' 个域名吗？\\n\\n⚠️ 此操作不可恢复！', '批量删除');
+      if (!confirmed) return;
+      
+      const indices = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-index')));
+      // 从大到小排序，避免删除时索引错乱
+      indices.sort((a, b) => b - a);
+      indices.forEach(index => {
+        currentBestDomains.splice(index, 1);
+      });
+      
+      renderBestDomainsList();
+      autoSaveBestDomains(); // 自动保存
+      showAlert('已删除 ' + indices.length + ' 个域名', 'success');
+      
+      // 清除选择
+      document.getElementById('select-all').checked = false;
+      updateBatchActionsBar();
     }
     
     let nextSyncSeconds = 15 * 60; // 15分钟 = 900秒
@@ -5456,8 +5874,16 @@ function renderAdminPanel() {
         
         const nodes = [];
         for (let i = 0; i < currentBestDomains.length; i++) {
-          const domain = currentBestDomains[i];
-          const parsed = parseDomainEntry(domain);
+          const domainObj = currentBestDomains[i];
+          // 检查是否启用，只显示启用的节点
+          const enabled = typeof domainObj === 'object' ? (domainObj.enabled !== false) : true;
+          
+          // 过滤掉禁用的节点
+          if (!enabled) {
+            continue;
+          }
+          
+          const parsed = parseDomainEntry(domainObj);
           if (parsed) {
             // 构建节点地址显示
             let nodeAddress;
@@ -5491,15 +5917,26 @@ function renderAdminPanel() {
     // 格式4: cf.twitter.now.cc:443 (域名，带端口)
     function parseDomainEntry(entry) {
       try {
+        // 支持对象格式和字符串格式
+        let entryStr;
+        if (typeof entry === 'string') {
+          entryStr = entry;
+        } else if (typeof entry === 'object' && entry.address) {
+          entryStr = entry.address;
+        } else {
+          console.error('解析域名条目失败: 无效格式', entry);
+          return null;
+        }
+        
         // 检查是否有#分隔符
         let addressPart, infoPart;
-        if (entry.includes('#')) {
-          const parts = entry.split('#');
+        if (entryStr.includes('#')) {
+          const parts = entryStr.split('#');
           addressPart = parts[0].trim();
           infoPart = parts[1].trim();
         } else {
           // 没有#，说明是纯域名
-          addressPart = entry.trim();
+          addressPart = entryStr.trim();
           infoPart = '';
         }
         
@@ -5513,13 +5950,16 @@ function renderAdminPanel() {
           address = ipv6Match[1]; // 2606:4700:7::a29f:8601
           port = ipv6Match[2]; // 443
           isDomain = false;
-        } else if (addressPart.match(/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:/)) {
-          // IPv4: 104.18.34.78:443
-          const ipv4Match = addressPart.match(/^([0-9.]+):([0-9]+)$/);
-          if (!ipv4Match) return null;
-          address = ipv4Match[1]; // 104.18.34.78
-          port = ipv4Match[2]; // 443
-          isDomain = false;
+        } else if (addressPart.match(/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/)) {
+          // IPv4: 104.18.34.78:443 或 104.18.34.78
+          const ipv4Match = addressPart.match(/^([0-9.]+):?([0-9]+)?$/);
+          if (ipv4Match) {
+            address = ipv4Match[1]; // 104.18.34.78
+            port = ipv4Match[2] || '443'; // 端口，默认443
+            isDomain = false;
+          } else {
+            return null;
+          }
         } else {
           // 域名: cf.twitter.now.cc 或 cf.twitter.now.cc:443
           isDomain = true;
@@ -5540,22 +5980,25 @@ function renderAdminPanel() {
         
         // 解析标签和地区
         let label, region;
-        if (isDomain) {
-          // 域名节点：名称就是域名本身，地区为空
-          label = address;
-          region = '';
-        } else if (infoPart) {
-          // IP节点：解析标签和地区
-          // 格式: "v4移动 LHR" -> label: v4移动, region: LHR
+        if (infoPart) {
+          // 有#分隔符，说明有自定义别名或标签
+          // 优先使用用户设置的别名
+          // 格式可能是: "台湾121" 或 "v4移动 LHR" 或 "美国"
           const infoMatch = infoPart.match(/^(.+?)\s+([A-Z]{2,4})$/);
           if (infoMatch) {
             label = infoMatch[1]; // v4移动
             region = infoMatch[2]; // LHR
           } else {
-            label = infoPart; // 整个作为标签
+            // 整个作为标签（用户自定义别名）
+            label = infoPart;
             region = '';
           }
+        } else if (isDomain) {
+          // 域名节点且无别名：名称就是域名本身
+          label = address;
+          region = '';
         } else {
+          // IP节点且无别名：使用IP地址
           label = address;
           region = '';
         }
