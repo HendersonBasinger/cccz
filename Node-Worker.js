@@ -1,6 +1,6 @@
 import { connect } from 'cloudflare:sockets';
 
-const REMOTE_API_URL = 'https://musical-capybara-jjg5www454493p4g7-3000.app.github.dev/api/users';
+const REMOTE_API_URL = 'https://ccfly.me/api/users';
 const API_TOKEN = 'd232d32c885e21177f0fec6dd3b5ea0f112b7cff5ea7ade75b55767f414a324d';
 const FALLBACK_CONFIG = {
     proxyIPs: ['ProxyIP.SG.CMLiussss.net'],
@@ -167,18 +167,6 @@ export default {
                 return new Response(html, {
                     status: 200,
                     headers: { 'Content-Type': 'text/html; charset=utf-8' }
-                });
-            }
-            
-            if (url.pathname === '/debug') {
-                await syncRemoteConfig();
-                return new Response(JSON.stringify({
-                    users: cachedData.users,
-                    settings: cachedData.settings,
-                    lastUpdate: new Date(cachedData.lastUpdate).toISOString(),
-                    apiUrl: REMOTE_API_URL
-                }, null, 2), {
-                    headers: { 'Content-Type': 'application/json' }
                 });
             }
             
