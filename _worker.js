@@ -137,19 +137,6 @@ export default {
                 });
             }
             
-            // 调试接口 - 查看当前配置
-            if (url.pathname === '/debug') {
-                await syncRemoteConfig();
-                return new Response(JSON.stringify({
-                    users: cachedData.users,
-                    settings: cachedData.settings,
-                    lastUpdate: new Date(cachedData.lastUpdate).toISOString(),
-                    apiUrl: RUNTIME_CONFIG.apiUrl
-                }, null, 2), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            
             // UUID 订阅路径
             await syncRemoteConfig();
             const users = cachedData.users;

@@ -130,24 +130,6 @@ export default {
                 });
             }
             
-            // 调试接口 - 查看当前配置
-            if (url.pathname === '/debug') {
-                await syncV2boardConfig();
-                return new Response(JSON.stringify({
-                    users: Object.keys(cachedData.users),
-                    userCount: Object.keys(cachedData.users).length,
-                    onlineUsers: Array.from(cachedData.onlineUsers),
-                    onlineCount: cachedData.onlineUsers.size,
-                    nodeInfo: cachedData.nodeInfo,
-                    proxyIPs: BUILTIN_PROXY_IPS,
-                    bestDomains: BUILTIN_BEST_DOMAINS,
-                    lastUpdate: new Date(cachedData.lastUpdate).toISOString(),
-                    v2boardUrl: V2BOARD_CONFIG.apiHost
-                }, null, 2), {
-                    headers: { 'Content-Type': 'application/json' }
-                });
-            }
-            
             // 手动触发在线用户上报
             if (url.pathname === '/report-online') {
                 ctx.waitUntil(reportOnlineUsers());
